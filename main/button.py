@@ -19,6 +19,7 @@ class Button():
         action = False
 
         # get mouse position
+        
         pos = pygame.mouse.get_pos()
 
         # check mouseover and clicked conditions
