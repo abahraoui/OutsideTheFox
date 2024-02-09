@@ -2,6 +2,7 @@ import math
 import pickle
 import random
 import sys
+from copy import copy
 from itertools import cycle
 import startscreen
 
@@ -26,25 +27,25 @@ def events():
         elif event.type == KEYDOWN and event.key == K_F1:
             paused = False
         if P:
-            if event.type == KEYDOWN and event.key == K_h and not P.get_blocked_right() and not P.get_lerping() and scroll < (
-                    MAX_COLS * TILE_SIZE) - W:
-                P.moveRight()
-                if P.get_reach_right_boundary():
-                    goal_scroll = scroll + TILE_SIZE / 2 + W - 427.5
-                else:
-                    goal_scroll = scroll + TILE_SIZE / 2
-                scrolling = True
-
-            elif event.type == KEYDOWN and event.key == K_f and not P.get_blocked_left() and not P.get_lerping() and scroll > 0:
-                P.moveLeft(scroll)
-                goal_scroll = scroll - TILE_SIZE / 2
-                scrolling = True
-
-            if event.type == KEYUP and (event.key == K_h or event.key == K_f):
-                P.notMoving()
-
-            if event.type == KEYDOWN and event.key == K_g:
-                P.jump()
+            # if event.type == KEYDOWN and event.key == K_h and not P.get_blocked_right() and not P.get_lerping() and scroll < (
+            #         MAX_COLS * TILE_SIZE) - W:
+            #     P.moveRight()
+            #     if P.get_reach_right_boundary():
+            #         goal_scroll = scroll + TILE_SIZE / 2 + W - 427.5
+            #     else:
+            #         goal_scroll = scroll + TILE_SIZE / 2
+            #     scrolling = True
+            #
+            # elif event.type == KEYDOWN and event.key == K_f and not P.get_blocked_left() and not P.get_lerping() and scroll > 0:
+            #     P.moveLeft(scroll)
+            #     goal_scroll = scroll - TILE_SIZE / 2
+            #     scrolling = True
+            #
+            # if event.type == KEYUP and (event.key == K_h or event.key == K_f):
+            #     P.notMoving()
+            #
+            # if event.type == KEYDOWN and event.key == K_g:
+            #     P.jump()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if user_input.mouse_colliding(event.pos):
@@ -115,15 +116,15 @@ def draw_world():
                     t = tile_class.Tile(x * TILE_SIZE - scroll, y * TILE_SIZE, (W, H), tiles_list[tile])
                     ground.add(t)
                     t.draw()
-
-                    if P and t.colliderect(P) and ground.__contains__(t):
+                    dummy = copy(P)
+                    if P.get_direction() == 'R':
+                     dummy.rect.x += 1
+                    else:
+                     dummy.rect.x -= 1
+                    if P and t.colliderect(dummy) and ground.__contains__(t):
                         P.is_colliding((t.x, t.y), (y, x))
-                        # print(f'This: {x}')
                     elif P:
                         P.not_colliding((y, x))
-                    # P.resetJump(t)
-                    # print(f"Hello {x} {y}")
-                    # print(ground.__contains__(P))
                 else:
                     screen.blit(tiles_list[tile], (x * TILE_SIZE - scroll, y * TILE_SIZE))
 
@@ -185,35 +186,6 @@ def scroll_world_free_movement():
         scroll_right = False
 
 
-def process_movement(queue):
-    global goal_scroll
-    global scrolling
-    done = False
-    match queue[0]:
-        case 0:
-            if P.get_direction() == "R" and P.get_lerping() and not P.get_blocked_right() and scroll < (
-                    MAX_COLS * TILE_SIZE) - W:
-                print("hey")
-                done = True
-                if P.get_reach_right_boundary():
-                    goal_scroll = scroll + TILE_SIZE / 2 + W - 427.5
-                else:
-                    goal_scroll = scroll + TILE_SIZE / 2
-                scrolling = True
-            # if P.get_blocked_right() or not scroll < (MAX_COLS * TILE_SIZE) - W:
-            #     done = True
-        case 1:
-            if P.get_direction() == "L" and P.get_lerping() and not P.get_blocked_left() and scroll > 0:
-                done = True
-                goal_scroll = scroll - TILE_SIZE / 2
-                scrolling = True
-            if P.get_blocked_left() or scroll <= 0:
-                done = True
-        case -1:
-            done = True
-    return done
-
-
 # display surface
 W, H = 1280, 720
 HW, HH = W / 2, H / 2
@@ -242,7 +214,7 @@ ROWS = 16
 MAX_COLS = 150
 TILE_SIZE = H // ROWS
 TILE_TYPES = 14
-level = 2
+level = 0
 background_tiles = [2]
 
 # Loads the tiles for the level editor.
@@ -288,9 +260,10 @@ sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
 frame = 0
 last_update = pygame.time.get_ticks()
 animation_cooldown = 500
-animation_steps = [4, 6, 2]
+animation_steps = [4, 6, 2, 2]
 action = 0
-animation_assets = ['assets/player_idle.png', 'assets/player_run.png', 'assets/player_jump.png']
+animation_assets = ['assets/player_idle.png', 'assets/player_run.png', 'assets/player_jump.png', 'assets/player_hurt'
+                                                                                                 '.png']
 BLACK = (0, 0, 0)
 
 player_animation_list = []
@@ -323,7 +296,7 @@ player_start_pos = world_coordinates[14][5]
 P.setLocation(player_start_pos[0] - TILE_SIZE // 2, player_start_pos[1])
 
 user_input = userinputfield.UserInputField("Player Editor", 24, 56, H - 56, 5)
-input_validator = inputboxvalidator.InputBoxValidator(P)
+input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W)
 
 while True:
     # if not pygame.mixer.music.get_busy():
@@ -340,8 +313,7 @@ while True:
         draw_world()
         if user_input.draw():
             input_validator.set_text(user_input.get_text_saved())
-            input_validator.validate(scroll)
-            player_action_queue = input_validator.get_queue()
+            input_validator.validate()
         if P.do():
             P = None
 
@@ -349,21 +321,24 @@ while True:
             # squares.update()
             # squares.draw(screen)
             # spawnHandler()
-            if player_action_queue:
-                if process_movement(player_action_queue):
-                    player_action_queue.pop(0) # else retry
 
-            scroll_world_free_movement()  # Uncomment to scroll with Q-D movement
+           # scroll_world_free_movement()  # Uncomment to scroll with Q-D movement
             for square in squares:
                 if square.colliderect(P):
                     P.resetJump(square)
 
             if scrolling:
                 scroll = pygame.math.lerp(scroll, goal_scroll, 0.05)
-                # print(round(self.x, 1), self.goalX)
                 if math.ceil(scroll) == math.ceil(goal_scroll) or math.floor(scroll) == math.floor(goal_scroll):
                     scrolling = False
                     scroll = goal_scroll
+
+            if len(input_validator.get_queue()) > 0 and not P.get_lerping():
+                answer = input_validator.process_queue(scroll)
+                if answer:
+                    draw_world()
+                    goal_scroll = answer[0]
+                    scrolling = answer[1]
 
             if P.get_reach_right_boundary():  # P.get_location()[0] >= (W - 150):
                 reset_scroll = True
@@ -372,12 +347,11 @@ while True:
                 scroll = scroll + W - 360
                 # P.setLocation(P.get_location()[0] - 850, P.get_location()[1])
                 P.reset_right_boundary()
+            # print(pygame.mouse.get_pos())
 
     elif not P:
         start_screen.start_screen_on(pygame.time.get_ticks())
         P = player.Player(3, 30, player_animation_list, (W, H), TILE_SIZE)
-        print(P.get_lerping())
-        print(P.goalX)
         scroll = 0
         scrolling = False
         P.setLocation(player_start_pos[0] - TILE_SIZE // 2, player_start_pos[1])

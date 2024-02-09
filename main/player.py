@@ -91,7 +91,7 @@ class Player(pygame.sprite.Sprite):
                 self.playRunSound()
         else:
             self.xVelocity = 0
-            self.notMoving()
+            #self.notMoving()
             self.stopRunSound()
         if keys[K_SPACE] and not self.jumping and not self.falling:
             self.jumpSound()
@@ -144,7 +144,8 @@ class Player(pygame.sprite.Sprite):
             self.action = 1
             self.animationCooldown = 100
             self.currentAnim = 0
-        elif not (self.lerping or self.moving) and not self.jumping and not self.falling and self.action != 0:
+        elif not (
+                self.lerping or self.moving) and not self.jumping and not self.falling and self.action != 0 and not self.hurt:
             self.action = 0
             self.animationCooldown = 250
             self.currentAnim = 0
@@ -176,6 +177,7 @@ class Player(pygame.sprite.Sprite):
     def is_colliding(self, collider, tile):
         if tile not in self.collider:
             self.collider[tile] = collider
+            self.process_collider()
 
     def not_colliding(self, tile):
         # self.colliding = False
@@ -191,7 +193,7 @@ class Player(pygame.sprite.Sprite):
 
             if self.collider[coll][1] > self.y:
                 below = True
-            if self.collider[coll][1] + 64 < self.y:
+            if self.collider[coll][1] + 64 < self.y and self.x - 23 <= self.collider[coll][0] <= self.x + 23:
                 above = True
             if self.collider[coll][0] > self.x and self.collider[coll][1] < self.y:
                 right = True
@@ -218,6 +220,7 @@ class Player(pygame.sprite.Sprite):
         else:
             self.blockedLeft = False
 
+        return right
     def checkRightX(self):
         check_boundary = self.x + self.tileSize
         if check_boundary < self.W - 149:
@@ -232,28 +235,13 @@ class Player(pygame.sprite.Sprite):
         else:
             return False
 
-    def add_to_queue(self, value, scroll):
-        self.received_scroll = scroll
-        self.action_queue.append(value)
-
-    def process_queue(self):
-        match self.action_queue[0]:
-            case 0:
-                self.moveRight()
-            case 1:
-                self.moveLeft(self.received_scroll)
-            case 2:
-                self.jump()
-        self.action_queue.pop(0)
-
     def moveRight(self):
         if self.x + self.tileSize > (self.W - 150):
             self.reachedRightBoundary = True
         if not self.lerping and not self.get_blocked_right():
-            self.received_scroll += 22.5
             self.moving = True
             self.flipAnim('R')
-            self.goalX = self.x + self.tileSize / 2 # 22.5
+            self.goalX = self.x + self.tileSize / 2  # 22.5
             if self.reachedRightBoundary:
                 self.goalX -= 850
             self.lerping = True
@@ -263,7 +251,7 @@ class Player(pygame.sprite.Sprite):
             self.hurtLastCooldown = pygame.time.get_ticks()
 
     def moveLeft(self, scroll):
-        if self.received_scroll == 0:
+        if scroll == 0:
             distance = self.tileSize
         else:
             distance = self.tileSize / 2
@@ -279,11 +267,11 @@ class Player(pygame.sprite.Sprite):
             self.hurtLastCooldown = pygame.time.get_ticks()
 
     def jump(self):
-        if not self.lerping and not self.jumping:
-            self.jumping = True
-            self.goalY = self.y - self.tileSize
-            self.lerping = True
-            self.jumpSound()
+        # if not self.lerping and not self.jumping:
+        self.jumping = True
+        self.goalY = self.y - self.tileSize
+        self.lerping = True
+        self.jumpSound()
 
     def reset_right_boundary(self):
         if self.reachedRightBoundary:
@@ -291,27 +279,27 @@ class Player(pygame.sprite.Sprite):
 
     def do(self):
         self.keys()
-        self.process_collider()
         self.move()
+        self.process_collider()
         self.draw()
         if self.y > self.H:
             return True
 
-        if self.action_queue and not self.lerping:
-            self.process_queue()
+        if self.lerping and not self.reachedRightBoundary:
+            if self.jumping:
+                self.y = pygame.math.lerp(self.y, self.goalY, 0.05)
+                if math.floor(self.y) == math.floor(self.goalY):
+                    self.y = self.goalY
+                    self.lerping = False
 
-        if self.lerping and not self.jumping and not self.reachedRightBoundary:
-            self.x = pygame.math.lerp(self.x, self.goalX, 0.05)
-            if math.ceil(self.x) == math.ceil(self.goalX) or math.floor(self.x) == math.floor(self.goalX):
-                self.x = self.goalX
-                self.lerping = False
-                self.stopRunSound()
+            if self.moving:
+                self.x = pygame.math.lerp(self.x, self.goalX, 0.05)
+                if math.ceil(self.x) == math.ceil(self.goalX) or math.floor(self.x) == math.floor(self.goalX):
 
-        elif self.lerping and self.jumping:
-            self.y = pygame.math.lerp(self.y, self.goalY, 0.05)
-            if math.floor(self.y) == math.floor(self.goalY):
-                self.y = self.goalY
-                self.lerping = False
+                        self.x = self.goalX
+                        self.lerping = False
+                        self.notMoving()
+                        self.stopRunSound()
 
         return False
 
