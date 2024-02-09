@@ -36,8 +36,8 @@ class Player(pygame.sprite.Sprite):
         self.goalY = 0
         self.lerping = False
         self.reachedRightBoundary = False
-        self.action_queue = []
-        self.received_scroll = 0
+        self.hurt = True
+        self.hurtLastCooldown = pygame.time.get_ticks()
 
     def setLocation(self, x, y):
         self.x = x
@@ -158,7 +158,13 @@ class Player(pygame.sprite.Sprite):
             self.animationCooldown = 250
             self.currentAnim = 0
             self.stopRunSound()
+        elif self.hurt and self.action != 3:
+            self.action = 3
+            self.currentAnim = 0
+            self.animationCooldown = 250
 
+        if self.hurt and pygame.time.get_ticks() > self.hurtLastCooldown + 500:
+            self.hurt = False
         # print(self.action.__str__() + ' : ' + self.currentAnim.__str__()) #Debug anim
 
     def resetJump(self, collider):
@@ -252,6 +258,9 @@ class Player(pygame.sprite.Sprite):
                 self.goalX -= 850
             self.lerping = True
             self.playRunSound()
+        elif self.get_blocked_right():
+            self.hurt = True
+            self.hurtLastCooldown = pygame.time.get_ticks()
 
     def moveLeft(self, scroll):
         if self.received_scroll == 0:
@@ -265,7 +274,9 @@ class Player(pygame.sprite.Sprite):
             self.goalX = self.x - distance  # 22.5
             self.lerping = True
             self.playRunSound()
-
+        elif self.get_blocked_left():
+            self.hurt = True
+            self.hurtLastCooldown = pygame.time.get_ticks()
 
     def jump(self):
         if not self.lerping and not self.jumping:
