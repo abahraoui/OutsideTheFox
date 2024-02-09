@@ -24,8 +24,11 @@ class UserInputField:
         self.lastLineFilled = False
         self.titleFontSize = title_font_size
         run_button_surface = pygame.font.Font('assets/joystix monospace.otf', 24).render("Run", True, (255, 255, 255))
-        self.run_button = button.Button(self.input_rect.x + (self.W - run_button_surface.get_width()) / 2,
+        self.runButton = button.Button(self.input_rect.x + (self.W - run_button_surface.get_width()) / 5,
                                         self.editable_y_down, run_button_surface, 1)
+        clear_button_surface = pygame.font.Font('assets/joystix monospace.otf', 24).render("Clear", True, (255, 255, 255))
+        self.clearButton = button.Button(self.input_rect.x + (self.W + clear_button_surface.get_width()) / 3,
+                                        self.editable_y_down, clear_button_surface, 1)
         self.lineLimit = line_limit
         self.lineCount = 0
 
@@ -104,7 +107,9 @@ class UserInputField:
         error_surface = numbering_font.render(f"Lines left: {self.lineLimit - self.lineCount}", True, 'darkblue')
         screen.blit(error_surface, (self.input_rect.x + (self.W - error_surface.get_width()) / 2,
                                     self.editable_y_down + 32))
-        if self.run_button.draw(screen):
+        if self.clearButton.draw(screen):
+            self.user_text = ""
+        if self.runButton.draw(screen):
             return True
         else:
             return False
