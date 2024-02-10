@@ -197,10 +197,11 @@ class Player(pygame.sprite.Sprite):
             if self.collider[coll][1] + 64 < self.y and self.collider[coll][0] <= self.x <= self.collider[coll][0] + self.tileSize:
                 above = True
                 above_last_y = above_last_y
-            if self.collider[coll][0] > self.x and  self.y + 64 < self.collider[coll][1] < self.y:
+            print(self.collider[coll][0],self.collider[coll][1])
+            if self.collider[coll][0] > self.x and self.y - 64 < self.collider[coll][1] < self.y:
                 right = True
                 self.xVelocity = 0
-            if self.collider[coll][0] < self.x and self.y + 64 < self.collider[coll][1] < self.y:
+            if self.collider[coll][0] < self.x and self.y - 64 < self.collider[coll][1] < self.y:
                 left = True
                 self.xVelocity = 0
         if below:
