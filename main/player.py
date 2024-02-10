@@ -118,7 +118,7 @@ class Player(pygame.sprite.Sprite):
 
         elif self.falling:
 
-            self.y += self.velocity * 2
+            self.y += self.velocity / 10
 
         self.textRect.center = (self.x, self.y - 70)
         self.rect.center = (self.x, self.y)
@@ -189,25 +189,27 @@ class Player(pygame.sprite.Sprite):
         left = False
         above = False
         below = False
+        above_last_y = 0
         for coll in self.collider:
 
-            if self.collider[coll][1] > self.y:
+            if self.collider[coll][1] > self.y and self.collider[coll][0] <= self.x <= self.collider[coll][0] + self.tileSize:
                 below = True
-            if self.collider[coll][1] + 64 < self.y and self.x - 23 <= self.collider[coll][0] <= self.x + 23:
+            if self.collider[coll][1] + 64 < self.y and self.collider[coll][0] <= self.x <= self.collider[coll][0] + self.tileSize:
                 above = True
-            if self.collider[coll][0] > self.x and self.collider[coll][1] < self.y:
+                above_last_y = above_last_y
+            if self.collider[coll][0] > self.x and  self.y + 64 < self.collider[coll][1] < self.y:
                 right = True
                 self.xVelocity = 0
-            if self.collider[coll][0] < self.x and self.collider[coll][1] < self.y:
+            if self.collider[coll][0] < self.x and self.y + 64 < self.collider[coll][1] < self.y:
                 left = True
                 self.xVelocity = 0
         if below:
             self.falling = False
         else:
             self.falling = True
-        if above:
-            self.jumping = False
-            self.falling = True
+        if above and self.jumping:
+            self.lerping = False
+            self.y = math.floor(self.y)
         if right:
             self.blockedRight = True
             self.blockedLeft = False
@@ -269,7 +271,7 @@ class Player(pygame.sprite.Sprite):
     def jump(self):
         # if not self.lerping and not self.jumping:
         self.jumping = True
-        self.goalY = self.y - self.tileSize
+        self.goalY = self.y - 1.5 * self.tileSize
         self.lerping = True
         self.jumpSound()
 
@@ -295,7 +297,6 @@ class Player(pygame.sprite.Sprite):
             if self.moving:
                 self.x = pygame.math.lerp(self.x, self.goalX, 0.05)
                 if math.ceil(self.x) == math.ceil(self.goalX) or math.floor(self.x) == math.floor(self.goalX):
-
                         self.x = self.goalX
                         self.lerping = False
                         self.notMoving()

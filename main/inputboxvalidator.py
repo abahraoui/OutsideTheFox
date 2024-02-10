@@ -39,7 +39,7 @@ class InputBoxValidator:
                     self.queue.pop(0)
                     return 0, False
             case 1:
-                if not self.player.get_blocked_left() and not self.player.get_lerping() and scroll > 0:
+                if not self.player.get_blocked_left() and not self.player.get_lerping() and scroll > 0 and not self.player.jumping:
                     self.player.moveLeft(scroll)
                     goal_scroll = scroll - self.tileSize / 2
                     scrolling = True
