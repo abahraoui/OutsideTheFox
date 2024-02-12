@@ -7,6 +7,10 @@ import pygame
 import user_execution_visitor
 
 
+def execute_code(obj, allowed):
+    exec(obj, allowed)
+
+
 class InputBoxValidator:
 
     def __init__(self, player, tile_size, W):
@@ -21,9 +25,6 @@ class InputBoxValidator:
 
     def set_text(self, text_to_validate):
         self.text_list = text_to_validate
-
-    def execute_code(self, exit_flag, obj, allowed):
-        exec(obj, allowed)
 
     def validate(self):
         self.finished = False
@@ -49,7 +50,7 @@ class InputBoxValidator:
                 print(ast.dump(node))
                 obj = compile(node, filename="<ast>", mode="exec")
                 allowed_vars = {"fox": self}
-                thread = threading.Thread(target=self.execute_code, args=(exit_flag, obj, allowed_vars))
+                thread = threading.Thread(target=execute_code, args=(obj, allowed_vars))
                 thread.start()
                 # timer = threading.Timer(2, thread.terminate)
                 # try:
