@@ -15,7 +15,6 @@ import spritesheet
 import userinputfield
 import inputboxvalidator
 
-
 # Event handler
 def events():
     global paused, scroll, goal_scroll, scrolling
@@ -302,7 +301,6 @@ while True:
     # if not pygame.mixer.music.get_busy():
     #     pygame.mixer.music.load(next(music_assets))
     #     pygame.mixer.music.play()  # Uncomment for music
-
     pygame.mixer.music.set_volume(0.5)
     draw_bg()
     # poll for events

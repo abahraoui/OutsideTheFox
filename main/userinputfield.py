@@ -8,7 +8,7 @@ class UserInputField:
 
         self.active_char = ""
         self.font = pygame.font.Font('freesansbold.ttf', 24)
-        self.user_text = ''
+        self.user_text = ' '
         self.W = 300
         self.editable_y_top = editable_y_top
         self.editable_y_down = editable_y_down
@@ -37,8 +37,10 @@ class UserInputField:
             self.color = self.color_active
         else:
             self.color = self.color_passive
-        screen = pygame.display.get_surface()
 
+        if not self.user_text:
+            self.user_text = ' '
+        screen = pygame.display.get_surface()
         pygame.draw.rect(screen, self.color, self.input_rect)
         pygame.draw.rect(screen, self.color_passive, (1280, 0, self.W, 36))
 
@@ -55,6 +57,7 @@ class UserInputField:
         text_list = []
         for i in range(len(self.user_text)):
             if len(text_surfaces) < self.lineLimit:
+
                 test_text += self.user_text[i]
                 text_surface = self.font.render(test_text, True, (255, 255, 255))
                 if i == len(self.user_text) - 1:
@@ -64,8 +67,11 @@ class UserInputField:
                             test_text += " "
                             self.user_text += " "
                             text_surface = self.font.render(test_text, True, (255, 255, 255))
+                        # test_text = test_text[:-1]
+                        # self.user_text = self.user_text[:-1]
                         text_surfaces.append(text_surface)
                         text_list.append(test_text)
+                        print(test_text)
                         new_text_surface = self.font.render("", True, (255, 255, 255))
                         text_surfaces.append(new_text_surface)
                     else:
@@ -79,6 +85,9 @@ class UserInputField:
                     if len(text_surfaces) == self.lineLimit:
                         self.lastLineFilled = True
 
+        for i in range(0, len(text_list)):
+            if text_list[i][0] == " ":
+                text_list[i] = text_list[i][1:]
         self.text_saved = text_list.copy()  # Saves the text to a class field.
         self.lineCount = len(text_surfaces)
         for i in range(len(text_surfaces)):
@@ -122,7 +131,7 @@ class UserInputField:
         if self.lastLineFilled:
             self.lastLineFilled = False
         if len(self.user_text) > 0 and self.user_text[len(self.user_text) - 1] == " ":
-            while self.user_text[len(self.user_text) - 1] == " ":
+            while  len(self.user_text) > 0 and self.user_text[len(self.user_text) - 1] == " ":
                 self.user_text = self.user_text[:-1]
 
     def add_text(self, text):
