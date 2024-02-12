@@ -18,6 +18,7 @@ class UserInputField:
         self.color_passive = pygame.Color('chartreuse4')
         self.color = self.color_passive
         self.active = False
+        self.mouseOver = False
         self.last_cooldown = pygame.time.get_ticks()
         self.text_saved = []
         self.newline = False
@@ -25,10 +26,11 @@ class UserInputField:
         self.titleFontSize = title_font_size
         run_button_surface = pygame.font.Font('assets/joystix monospace.otf', 24).render("Run", True, (255, 255, 255))
         self.runButton = button.Button(self.input_rect.x + (self.W - run_button_surface.get_width()) / 5,
-                                        self.editable_y_down, run_button_surface, 1)
-        clear_button_surface = pygame.font.Font('assets/joystix monospace.otf', 24).render("Clear", True, (255, 255, 255))
+                                       self.editable_y_down, run_button_surface, 1)
+        clear_button_surface = pygame.font.Font('assets/joystix monospace.otf', 24).render("Clear", True,
+                                                                                           (255, 255, 255))
         self.clearButton = button.Button(self.input_rect.x + (self.W + clear_button_surface.get_width()) / 3,
-                                        self.editable_y_down, clear_button_surface, 1)
+                                         self.editable_y_down, clear_button_surface, 1)
         self.lineLimit = line_limit
         self.lineCount = 0
 
@@ -37,6 +39,13 @@ class UserInputField:
             self.color = self.color_active
         else:
             self.color = self.color_passive
+        if self.mouseOver and not self.active:
+            self.color = "red"
+        else:
+            if self.active:
+                self.color = self.color_active
+            else:
+                self.color = self.color_passive
 
         if not self.user_text:
             self.user_text = ' '
@@ -114,24 +123,33 @@ class UserInputField:
                          self.input_rect.y + self.editable_y_top * (index_of_last + 1)))
 
         error_surface = numbering_font.render(f"Lines left: {self.lineLimit - self.lineCount}", True, 'darkblue')
-        screen.blit(error_surface, (self.input_rect.x + (self.W - error_surface.get_width()) / 2,
-                                    self.editable_y_down + 32))
-        if self.clearButton.draw(screen):
-            self.user_text = ""
-        if self.runButton.draw(screen):
-            return True
-        else:
-            return False
+
+        if self.active:
+            screen.blit(error_surface, (self.input_rect.x + (self.W - error_surface.get_width()) / 2,
+                                        self.editable_y_down + 32))
+            if self.clearButton.draw(screen):
+                self.user_text = ""
+            if self.runButton.draw(screen):
+                return True
+            else:
+                return False
 
     def set_active(self, value):
         self.active = value
+
+    def set_mouse_over(self, value):
+        self.mouseOver = value
+
+    def get_active(self):
+        return self.active  # return active in a not fashion, to no make it confusing in game (active is False
+        # means user input is running).
 
     def remove_text(self):
         self.user_text = self.user_text[:-1]
         if self.lastLineFilled:
             self.lastLineFilled = False
         if len(self.user_text) > 0 and self.user_text[len(self.user_text) - 1] == " ":
-            while  len(self.user_text) > 0 and self.user_text[len(self.user_text) - 1] == " ":
+            while len(self.user_text) > 0 and self.user_text[len(self.user_text) - 1] == " ":
                 self.user_text = self.user_text[:-1]
 
     def add_text(self, text):
@@ -141,9 +159,6 @@ class UserInputField:
     def set_newline(self):
         if self.lineCount < self.lineLimit:
             self.newline = True
-
-    def get_active(self):
-        return self.active
 
     def get_text_saved(self):
         return self.text_saved

@@ -115,10 +115,8 @@ class Player(pygame.sprite.Sprite):
             if not self.lerping:
                 self.jumping = False
                 self.falling = True
-
         elif self.falling:
-
-            self.y += self.velocity / 10
+            self.y += self.velocity / 5
 
         self.textRect.center = (self.x, self.y - 70)
         self.rect.center = (self.x, self.y)
@@ -189,18 +187,16 @@ class Player(pygame.sprite.Sprite):
         left = False
         above = False
         below = False
-        above_last_y = 0
         for coll in self.collider:
 
             if self.collider[coll][1] > self.y and self.collider[coll][0] <= self.x <= self.collider[coll][0] + self.tileSize:
                 below = True
             if self.collider[coll][1] + 64 < self.y and self.collider[coll][0] <= self.x <= self.collider[coll][0] + self.tileSize:
                 above = True
-                above_last_y = above_last_y
-            if self.collider[coll][0] > self.x and self.y - 64 < self.collider[coll][1] < self.y:
+            if self.collider[coll][0] > self.x and self.y - 31 < self.collider[coll][1] < self.y + 31:
                 right = True
                 self.xVelocity = 0
-            if self.collider[coll][0] < self.x and self.y - 64 < self.collider[coll][1] < self.y:
+            if self.collider[coll][0] < self.x and self.y - 31 < self.collider[coll][1] < self.y + 31:
                 left = True
                 self.xVelocity = 0
         if below:
@@ -215,7 +211,6 @@ class Player(pygame.sprite.Sprite):
             self.blockedLeft = False
         else:
             self.blockedRight = False
-
         if left:
             self.blockedLeft = True
             self.blockedRight = False

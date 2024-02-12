@@ -17,30 +17,14 @@ class InputBoxValidator:
         self.queue = []
         self.tileSize = tile_size
         self.W = W
-        file_name = 'user_execution.py'
-        script_to_test = ""
         self.visitor = user_execution_visitor.UserExecutionVisitor()
-        # lines = self.file.readlines()
-        # for line in lines:
-        #     self.visitor.visit(ast.parse(line.__str__()))
-
-        # self.file.write("player.jump()")
-        # self.visitor.visit(ast.parse(self.file))
-
-    # self.root = ast.parse(open('main/user_execution.py').read())
-    def exec_code(self):
-        fox = self
-        file = open('main/user_execution.py', 'w').write("fox.moveRight()")
-        file = open('main/user_execution.py', 'r').read()
-        node = ast.parse(file.__str__())
-        obj = compile(node, filename="<ast>", mode="exec")
-        print(obj)
-        exec(obj)
-
+        self.finished = True
+        self.lastCooldown = 0
     def set_text(self, text_to_validate):
         self.text_list = text_to_validate
 
     def validate(self):
+        self.finished = False
         if self.text_list:
             file = open('main/user_execution.py', 'w')
             for text in self.text_list:
@@ -67,16 +51,20 @@ class InputBoxValidator:
                 #     print("")  # print("Validation input error !")
             file.close()
             file = open('main/user_execution.py', 'r').read()
-            print(file.__str__().encode())
             node = ast.parse(file.__str__())
+            for elem in node.body:
+                self.visitor.visit(elem)
+                if elem.value and isinstance(elem.value,ast.Pass):
+                    node.body.remove(elem)
+            print(ast.dump(node))
             fox = self
             obj = compile(node, filename="<ast>", mode="exec")
             exec(obj)
 
     def process_queue(self, scroll):
-        print(self.queue)
         match self.queue[0]:
             case 0:
+                print(self.player.get_location(),"PLAYER")
                 if not self.player.get_lerping() and not self.player.get_blocked_right() and not self.player.jumping:
                     self.player.moveRight()
                     if self.player.get_reach_right_boundary():
@@ -100,7 +88,7 @@ class InputBoxValidator:
                     self.queue.pop(0)
                     return 0, False
             case 2:
-                if not self.player.get_lerping() and not self.player.jumping:
+                if not self.player.get_lerping() and not self.player.jumping and not self.player.falling:
                     self.player.jump()
                     self.queue.pop(0)
                     scrolling = False
@@ -109,8 +97,16 @@ class InputBoxValidator:
                 print("Not an action.")
 
     def get_queue(self):
+        if not self.queue and not self.finished:
+            self.finished = True
+            self.lastCooldown = pygame.time.get_ticks()
         return self.queue
 
+    def isDone(self):
+        if self.finished and pygame.time.get_ticks() > self.lastCooldown + 800:
+            return True
+        else:
+            return False
     def moveRight(self):
         self.queue.append(0)
 

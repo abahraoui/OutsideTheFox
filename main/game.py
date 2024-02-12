@@ -45,26 +45,33 @@ def events():
             #
             # if event.type == KEYDOWN and event.key == K_g:
             #     P.jump()
+            if input_validator.isDone():
 
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if user_input.mouse_colliding(event.pos):
-                    user_input.set_active(True)
+                if user_input.mouse_colliding(pygame.mouse.get_pos()):
+                    user_input.set_mouse_over(True)
+                    user_input.color = "red"
                 else:
-                    user_input.set_active(False)
+                    user_input.set_mouse_over(False)
 
-            if event.type == pygame.KEYDOWN and user_input.get_active():
-                # Check for backspace
-                if event.key == pygame.K_BACKSPACE:
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if user_input.mouse_colliding(event.pos):
+                        user_input.set_active(True)
+                    else:
+                        user_input.set_active(False)
 
-                    # get text input from 0 to -1 i.e. end.
-                    user_input.remove_text()
+                if event.type == pygame.KEYDOWN and user_input.get_active():
+                    # Check for backspace
+                    if event.key == pygame.K_BACKSPACE:
 
-                elif event.key == 13:  # Code for ENTER Key.
-                    user_input.set_newline()
-                    # Unicode standard is used for string
-                # formation
-                else:
-                    user_input.add_text(event.unicode)
+                        # get text input from 0 to -1 i.e. end.
+                        user_input.remove_text()
+
+                    elif event.key == 13:  # Code for ENTER Key.
+                        user_input.set_newline()
+                        # Unicode standard is used for string
+                    # formation
+                    else:
+                        user_input.add_text(event.unicode)
 
 
 def spawnHandler():
@@ -117,9 +124,9 @@ def draw_world():
                     t.draw()
                     dummy = copy(P)
                     if P.get_direction() == 'R':
-                     dummy.rect.x += 1
+                        dummy.rect.x += 1
                     else:
-                     dummy.rect.x -= 1
+                        dummy.rect.x -= 1
                     if P and t.colliderect(dummy) and ground.__contains__(t):
                         P.is_colliding((t.x, t.y), (y, x))
                     elif P:
@@ -307,7 +314,11 @@ while True:
     # pygame.QUIT event means the user clicked X to close your window
     events()
     if not paused and P:
-        draw_grid()
+        if input_validator.isDone():
+            draw_grid()
+        else:
+            user_input.set_mouse_over(False)
+            user_input.set_active(False)
         draw_world()
         if user_input.draw():
             input_validator.set_text(user_input.get_text_saved())
@@ -320,7 +331,7 @@ while True:
             # squares.draw(screen)
             # spawnHandler()
 
-           # scroll_world_free_movement()  # Uncomment to scroll with Q-D movement
+            # scroll_world_free_movement()  # Uncomment to scroll with Q-D movement
             for square in squares:
                 if square.colliderect(P):
                     P.resetJump(square)
