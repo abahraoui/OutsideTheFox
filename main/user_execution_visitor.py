@@ -14,7 +14,13 @@ passing = ast.Pass(
 
 class UserExecutionVisitor(ast.NodeTransformer):
     def visit(self, node):
+
+        # Sanitizes function calls not allowed.
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.value.id != "fox":
+            return passing
+
+        # Sanitizes builtins functions.
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and (node.func.id == "exec" or node.func.id == "eval"):
             return passing
 
         child = ast.NodeTransformer.visit(self, node)

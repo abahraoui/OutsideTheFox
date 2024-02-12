@@ -1,12 +1,10 @@
 import ast
-import pickle
-import subprocess
-import sys
+import threading
+from threading import Thread
+from time import sleep
 
 import pygame
-
 import user_execution_visitor
-from pathlib import Path
 
 
 class InputBoxValidator:
@@ -20,8 +18,12 @@ class InputBoxValidator:
         self.visitor = user_execution_visitor.UserExecutionVisitor()
         self.finished = True
         self.lastCooldown = 0
+
     def set_text(self, text_to_validate):
         self.text_list = text_to_validate
+
+    def execute_code(self, exit_flag, obj, allowed):
+        exec(obj, allowed)
 
     def validate(self):
         self.finished = False
@@ -29,7 +31,6 @@ class InputBoxValidator:
             try:
                 file = open('main/user_execution.py', 'w')
                 for text in self.text_list:
-
                     # print(ast.parse(text).type_comment)
 
                     # print(sys.exc_info()[0])
@@ -40,20 +41,39 @@ class InputBoxValidator:
                 node = ast.parse(file.__str__())
                 for elem in node.body:
                     self.visitor.visit(elem)
-                    if isinstance(elem, ast.Expr) and elem.value and isinstance(elem.value,ast.Pass):
+                    if isinstance(elem, ast.Expr) and elem.value and isinstance(elem.value, ast.Pass):
                         node.body.remove(elem)
+                    elif isinstance(elem, ast.Import):
+                        node.body.remove(elem)
+
                 print(ast.dump(node))
-                fox = self
                 obj = compile(node, filename="<ast>", mode="exec")
-                exec(obj)
+                allowed_vars = {"fox": self}
+                thread = threading.Thread(target=self.execute_code, args=(exit_flag, obj, allowed_vars))
+                thread.start()
+                # timer = threading.Timer(2, thread.terminate)
+                # try:
+                #     # Start the timer
+                #     timer.start()
+                #
+                #     # Wait for the thread to finish
+                #     thread.join()
+                #
+                # except Exception as e:
+                #     print(f"An error occurred: {e}")
+                #
+                # finally:
+                #     # Cancel the timer
+                #     timer.cancel()
+
+
             except Exception as e:
                 print(f"Yo it's {e.args}")
-
 
     def process_queue(self, scroll):
         match self.queue[0]:
             case 0:
-                print(self.player.get_location(),"PLAYER")
+                print(self.player.get_location(), "PLAYER")
                 if not self.player.get_lerping() and not self.player.get_blocked_right() and not self.player.jumping:
                     self.player.moveRight()
                     if self.player.get_reach_right_boundary():
@@ -96,6 +116,7 @@ class InputBoxValidator:
             return True
         else:
             return False
+
     def moveRight(self):
         self.queue.append(0)
 
