@@ -26,40 +26,29 @@ class InputBoxValidator:
     def validate(self):
         self.finished = False
         if self.text_list:
-            file = open('main/user_execution.py', 'w')
-            for text in self.text_list:
-                print(text)
-                try:
+            try:
+                file = open('main/user_execution.py', 'w')
+                for text in self.text_list:
 
-                    ast.parse(text)  # + "\nP")
-                    # print("y")
                     # print(ast.parse(text).type_comment)
 
-                except:
-                    print("")
                     # print(sys.exc_info()[0])
-                # print(text + "\nP")
-                # print("Done")
-                file.write(text + "\n")
-                # if "P.moveRight()" in text:
-                #     self.queue.append(0)
-                # elif "P.moveLeft()" in text:
-                #     self.queue.append(1)
-                # elif "P.jump()" in text:
-                #     self.queue.append(2)
-                # else:
-                #     print("")  # print("Validation input error !")
-            file.close()
-            file = open('main/user_execution.py', 'r').read()
-            node = ast.parse(file.__str__())
-            for elem in node.body:
-                self.visitor.visit(elem)
-                if elem.value and isinstance(elem.value,ast.Pass):
-                    node.body.remove(elem)
-            print(ast.dump(node))
-            fox = self
-            obj = compile(node, filename="<ast>", mode="exec")
-            exec(obj)
+                    file.write(text + "\n")
+
+                file.close()
+                file = open('main/user_execution.py', 'r').read()
+                node = ast.parse(file.__str__())
+                for elem in node.body:
+                    self.visitor.visit(elem)
+                    if isinstance(elem, ast.Expr) and elem.value and isinstance(elem.value,ast.Pass):
+                        node.body.remove(elem)
+                print(ast.dump(node))
+                fox = self
+                obj = compile(node, filename="<ast>", mode="exec")
+                exec(obj)
+            except Exception as e:
+                print(f"Yo it's {e.args}")
+
 
     def process_queue(self, scroll):
         match self.queue[0]:

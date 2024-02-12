@@ -58,7 +58,7 @@ class Player(pygame.sprite.Sprite):
         # pygame.mixer.music.stop()
 
     def playRunSound(self):
-        if self.runningSound.get_num_channels() == 0:
+        if self.runningSound.get_num_channels() == 0 and not self.falling:
             self.runningSound.play()
             self.runningSound.set_volume(1)
 
@@ -92,7 +92,7 @@ class Player(pygame.sprite.Sprite):
         else:
             self.xVelocity = 0
             #self.notMoving()
-            self.stopRunSound()
+            #self.stopRunSound()
         if keys[K_SPACE] and not self.jumping and not self.falling:
             self.jumpSound()
             self.jumping = True
@@ -147,6 +147,7 @@ class Player(pygame.sprite.Sprite):
             self.action = 0
             self.animationCooldown = 250
             self.currentAnim = 0
+            self.stopRunSound()
         elif self.jumping and self.action != 2:
             self.action = 2
             self.animationCooldown = 250
@@ -189,9 +190,9 @@ class Player(pygame.sprite.Sprite):
         below = False
         for coll in self.collider:
 
-            if self.collider[coll][1] > self.y and self.collider[coll][0] <= self.x <= self.collider[coll][0] + self.tileSize:
+            if self.collider[coll][1] > self.y and self.x - 24 < self.collider[coll][0] < self.x + 24:   # self.collider[coll][0] <= self.x <= self.collider[coll][0] + self.tileSize:
                 below = True
-            if self.collider[coll][1] + 64 < self.y and self.collider[coll][0] <= self.x <= self.collider[coll][0] + self.tileSize:
+            if self.collider[coll][1] + 64 < self.y and self.x - 24 < self.collider[coll][0] < self.x + 24:
                 above = True
             if self.collider[coll][0] > self.x and self.y - 31 < self.collider[coll][1] < self.y + 31:
                 right = True
@@ -295,7 +296,7 @@ class Player(pygame.sprite.Sprite):
                         self.x = self.goalX
                         self.lerping = False
                         self.notMoving()
-                        self.stopRunSound()
+                        #self.stopRunSound()
 
         return False
 
