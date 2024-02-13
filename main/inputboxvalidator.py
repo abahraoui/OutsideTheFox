@@ -48,7 +48,6 @@ class InputBoxValidator:
                     elif isinstance(elem, ast.Import):
                         node.body.remove(elem)
 
-                print(ast.dump(node))
                 obj = compile(node, filename="<ast>", mode="exec")
                 # restricts the allowed variables to 'fox'.
                 allowed_vars = {"fox": self}
@@ -78,7 +77,6 @@ class InputBoxValidator:
     def process_queue(self, scroll):
         match self.queue[0]:
             case 0:
-                print(self.player.get_location(), "PLAYER")
                 if not self.player.get_lerping() and not self.player.get_blocked_right() and not self.player.jumping:
                     self.player.moveRight()
                     if self.player.get_reach_right_boundary():

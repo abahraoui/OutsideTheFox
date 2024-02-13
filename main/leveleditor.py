@@ -149,7 +149,7 @@ scroll_speed = 1
 ROWS = 16
 MAX_COLS = 150
 TILE_SIZE = H // ROWS
-TILE_TYPES = 14
+TILE_TYPES = 15
 current_tile = 0
 level = 0
 

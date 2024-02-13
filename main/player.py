@@ -38,6 +38,7 @@ class Player(pygame.sprite.Sprite):
         self.reachedRightBoundary = False
         self.hurt = True
         self.hurtLastCooldown = pygame.time.get_ticks()
+        self.finished = False
 
     def setLocation(self, x, y):
         self.x = x

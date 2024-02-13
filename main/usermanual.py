@@ -30,7 +30,7 @@ class UserManual:
                 continue
             test_text += self.user_manual_text[i]
             text_surface = self.font.render(test_text, True, (255, 255, 255))
-            if text_surface.get_width() >= self.active_W - 24:
+            if text_surface.get_width() >= self.active_W - 30:
                 self.text_surfaces.append(text_surface)
                 text_list.append(test_text)
                 test_text = ""

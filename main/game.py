@@ -130,7 +130,13 @@ def draw_world():
                 if (x, y) == (149, 15):
                     coordinates_filled = True
             if tile >= 0:
-                if tile not in background_tiles:
+                if tile == 14:
+                    t = tile_class.Tile(x * TILE_SIZE - scroll, y * TILE_SIZE, (W, H), tiles_list[tile])
+                    t.draw()
+                    pygame.draw.rect(screen, "blue", (x * TILE_SIZE - scroll, y*TILE_SIZE, TILE_SIZE, TILE_SIZE), 3)
+                    if P and t.colliderect(P):
+                        P.set_finished()
+                elif tile not in background_tiles:
                     t = tile_class.Tile(x * TILE_SIZE - scroll, y * TILE_SIZE, (W, H), tiles_list[tile])
                     ground.add(t)
                     t.draw()
@@ -182,11 +188,47 @@ def load_level_data():
 
 # Draws the grid.
 def draw_grid():
-    for col in range(MAX_COLS + 1):
-        pygame.draw.line(screen, WHITE, (col * TILE_SIZE - scroll, 0), (col * TILE_SIZE - scroll, H))
+    #
+    # for col in range(MAX_COLS + 1):
+    #     pygame.draw.line(screen, WHITE, (col * TILE_SIZE - scroll, 0), (col * TILE_SIZE - scroll, H))
+    #
+    # for row in range(MAX_COLS + 1):
+    #     pygame.draw.line(screen, WHITE, (0, row * TILE_SIZE), (W, row * TILE_SIZE))
 
+    # draws cols
+    for col in range(MAX_COLS + 1):
+        x = col * TILE_SIZE - scroll
+        y = col * TILE_SIZE
+        rounded_p_x = P.get_location()[0] + scroll + TILE_SIZE / 2
+        if P.get_location()[0] + TILE_SIZE * 5 >= x >= P.get_location()[0] - TILE_SIZE * 5:
+            rounded_p_y = P.get_location()[1] - P.get_location()[1] % TILE_SIZE  # Is the rounded up perfect tile y.
+            offset_y = col * TILE_SIZE
+            if offset_y >= rounded_p_x:
+                offset_y = offset_y - 2 * (offset_y - rounded_p_x) - TILE_SIZE
+
+            pygame.draw.line(screen, WHITE, (x, H),
+                             (x, rounded_p_y - offset_y + (rounded_p_x - 225)))
+    # draws rows
     for row in range(MAX_COLS + 1):
-        pygame.draw.line(screen, WHITE, (0, row * TILE_SIZE), (W, row * TILE_SIZE))
+        y = row * TILE_SIZE
+        x = row * TILE_SIZE - scroll
+        max_row = 0
+        min_row = 0
+        rounded_p_y = P.get_location()[1] - P.get_location()[1] % TILE_SIZE
+        if P.get_location()[1] + TILE_SIZE * 5 >= y >= P.get_location()[1] - TILE_SIZE * 5:
+            rounded_p_x = P.get_location()[0]
+            offset_x = (rounded_p_x - (rounded_p_x) % TILE_SIZE) - abs(row * TILE_SIZE - rounded_p_y) + 5 * TILE_SIZE  # * (rounded_p_x / 225) # 225 = 1, 315
+            # print(row, offset_x)
+            # if offset_x >= rounded_p_x:  # 450 -> row 10
+            #     offset_x = offset_x - 2 * (offset_x + rounded_p_x)
+            if not (rounded_p_x / TILE_SIZE).is_integer():
+                offset_x += TILE_SIZE / 2
+            offset_x = offset_x - (offset_x % TILE_SIZE)
+            # print(row, offset_x)
+            if scroll % 2 == 0:
+                pygame.draw.line(screen, WHITE, (0, y), (offset_x, y))
+            else:
+                pygame.draw.line(screen, WHITE, (0, y), (offset_x + 22.5, y))
 
 
 def scroll_world_free_movement():
@@ -231,7 +273,7 @@ reset_scroll = False
 ROWS = 16
 MAX_COLS = 150
 TILE_SIZE = H // ROWS
-TILE_TYPES = 14
+TILE_TYPES = 15
 level = 0
 background_tiles = [2]
 
@@ -311,11 +353,11 @@ P = player.Player(3, 30, player_animation_list, (W, H), TILE_SIZE)
 draw_world()
 
 player_start_pos = world_coordinates[14][5]
-P.setLocation(player_start_pos[0] - TILE_SIZE // 2, player_start_pos[1])
+P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
 
 user_input = userinputfield.UserInputField("Player Editor", 24, 56, H - 56, 5)
 input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W)
-user_manual = usermanual.UserManual(980, 0, "Hello", "")
+user_manual = usermanual.UserManual(980, 0, "In this level you \nhave to reach the end!", "")
 
 while True:
     # if not pygame.mixer.music.get_busy():
@@ -377,7 +419,8 @@ while True:
         P = player.Player(3, 30, player_animation_list, (W, H), TILE_SIZE)
         scroll = 0
         scrolling = False
-        P.setLocation(player_start_pos[0] - TILE_SIZE // 2, player_start_pos[1])
+        P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
+        input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W)
         paused = True
 
     else:

@@ -80,7 +80,6 @@ class UserInputField:
                         # self.user_text = self.user_text[:-1]
                         text_surfaces.append(text_surface)
                         text_list.append(test_text)
-                        print(test_text)
                         new_text_surface = self.font.render("", True, (255, 255, 255))
                         text_surfaces.append(new_text_surface)
                     else:
