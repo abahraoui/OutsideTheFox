@@ -19,7 +19,7 @@ class UserExecutionVisitor(ast.NodeTransformer):
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.value.id != "fox":
             return passing
 
-        # Sanitizes builtins functions.
+        # Sanitizes builtins functions exec and eval that can execute code.
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and (node.func.id == "exec" or node.func.id == "eval"):
             return passing
 

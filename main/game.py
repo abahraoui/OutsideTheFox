@@ -14,6 +14,8 @@ from pygame.locals import *
 import spritesheet
 import userinputfield
 import inputboxvalidator
+import usermanual
+
 
 # Event handler
 def events():
@@ -47,17 +49,27 @@ def events():
             #     P.jump()
             if input_validator.isDone():
 
-                if user_input.mouse_colliding(pygame.mouse.get_pos()):
+                if user_manual.mouse_colliding(pygame.mouse.get_pos()):
+                    # if not user_manual.get_active():
+                    pygame.mouse.set_cursor(*pygame.cursors.broken_x)
+
+                elif user_input.mouse_colliding(pygame.mouse.get_pos()):
+                    if not user_input.get_active():
+                        pygame.mouse.set_cursor(*pygame.cursors.broken_x)
                     user_input.set_mouse_over(True)
                     user_input.color = "red"
                 else:
+                    pygame.mouse.set_cursor(*pygame.cursors.arrow)
                     user_input.set_mouse_over(False)
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if user_input.mouse_colliding(event.pos):
+                        pygame.mouse.set_cursor(*pygame.cursors.arrow)
                         user_input.set_active(True)
                     else:
                         user_input.set_active(False)
+                    if user_manual.mouse_colliding(event.pos):
+                        user_manual.flip_active()
 
                 if event.type == pygame.KEYDOWN and user_input.get_active():
                     # Check for backspace
@@ -303,6 +315,7 @@ P.setLocation(player_start_pos[0] - TILE_SIZE // 2, player_start_pos[1])
 
 user_input = userinputfield.UserInputField("Player Editor", 24, 56, H - 56, 5)
 input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W)
+user_manual = usermanual.UserManual(980, 0, "Hello", "")
 
 while True:
     # if not pygame.mixer.music.get_busy():
@@ -320,6 +333,7 @@ while True:
             user_input.set_mouse_over(False)
             user_input.set_active(False)
         draw_world()
+        user_manual.draw()
         if user_input.draw():
             input_validator.set_text(user_input.get_text_saved())
             input_validator.validate()

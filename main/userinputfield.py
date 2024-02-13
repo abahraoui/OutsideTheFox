@@ -66,12 +66,12 @@ class UserInputField:
         text_list = []
         for i in range(len(self.user_text)):
             if len(text_surfaces) < self.lineLimit:
-
                 test_text += self.user_text[i]
                 text_surface = self.font.render(test_text, True, (255, 255, 255))
                 if i == len(self.user_text) - 1:
                     if self.newline:
                         self.newline = False
+                        #TODO change inferior to superior and check behavior
                         while text_surface.get_width() <= self.W - 24:
                             test_text += " "
                             self.user_text += " "

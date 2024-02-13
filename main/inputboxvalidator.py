@@ -44,14 +44,17 @@ class InputBoxValidator:
                     self.visitor.visit(elem)
                     if isinstance(elem, ast.Expr) and elem.value and isinstance(elem.value, ast.Pass):
                         node.body.remove(elem)
+                    # removes import statements
                     elif isinstance(elem, ast.Import):
                         node.body.remove(elem)
 
                 print(ast.dump(node))
                 obj = compile(node, filename="<ast>", mode="exec")
+                # restricts the allowed variables to 'fox'.
                 allowed_vars = {"fox": self}
-                thread = threading.Thread(target=execute_code, args=(obj, allowed_vars))
-                thread.start()
+                execute_code(obj, allowed_vars)
+                # thread = threading.Thread(target=execute_code, args=(obj, allowed_vars))
+                # thread.start()
                 # timer = threading.Timer(2, thread.terminate)
                 # try:
                 #     # Start the timer
@@ -69,6 +72,7 @@ class InputBoxValidator:
 
 
             except Exception as e:
+                #feedback point e
                 print(f"Yo it's {e.args}")
 
     def process_queue(self, scroll):
@@ -85,6 +89,7 @@ class InputBoxValidator:
                     self.queue.pop(0)
                     return goal_scroll, scrolling
                 elif self.player.get_blocked_right():
+                    # feedback point player blocked right
                     self.queue.pop(0)
                     return 0, False
             case 1:
@@ -95,6 +100,7 @@ class InputBoxValidator:
                     self.queue.pop(0)
                     return goal_scroll, scrolling
                 elif self.player.get_blocked_left() or scroll == 0:
+                    # feedback point player blocked left (maybe hurt visually)
                     self.queue.pop(0)
                     return 0, False
             case 2:
