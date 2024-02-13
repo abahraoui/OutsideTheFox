@@ -284,7 +284,7 @@ class Player(pygame.sprite.Sprite):
         self.move()
         self.process_collider()
         self.draw()
-        if self.y > self.H:
+        if self.y > self.H or self.finished:
             return True
 
         if self.lerping and not self.reachedRightBoundary:
@@ -304,6 +304,8 @@ class Player(pygame.sprite.Sprite):
 
         return False
 
+    def set_finished(self):
+        self.finished = True
     def get_reach_right_boundary(self):
         return self.reachedRightBoundary
 
