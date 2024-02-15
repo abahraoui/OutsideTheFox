@@ -71,7 +71,7 @@ class InputBoxValidator:
 
 
             except Exception as e:
-                #feedback point e
+                # feedback point e
                 print(f"Yo it's {e.args}")
 
     def process_queue(self, scroll):

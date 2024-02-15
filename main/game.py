@@ -357,7 +357,8 @@ P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
 
 user_input = userinputfield.UserInputField("Player Editor", 24, 56, H - 56, 5)
 input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W)
-user_manual = usermanual.UserManual(980, 0, "In this level you \nhave to reach the end!", "")
+user_manual = usermanual.UserManual(980, 0, "", "In this level, you have to reach the end!",
+                                    "Try using 'fox.moveRight()' and 'fox.jump()' if you find yourself blocked by an obstacle!\n")
 
 while True:
     # if not pygame.mixer.music.get_busy():
