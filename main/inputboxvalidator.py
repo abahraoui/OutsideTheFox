@@ -1,7 +1,5 @@
 import ast
-import threading
-from threading import Thread
-from time import sleep
+
 
 import pygame
 import user_execution_visitor
@@ -82,31 +80,37 @@ class InputBoxValidator:
                     if self.player.get_reach_right_boundary():
                         goal_scroll = scroll + self.tileSize / 2 + self.W - 427.5
                     else:
-                        goal_scroll = scroll + self.tileSize / 2
+                        goal_scroll = 1
                     scrolling = True
                     self.queue.pop(0)
                     return goal_scroll, scrolling
-                elif self.player.get_blocked_right() and self.player.finishedCrouching and not self.player.get_lerping:
-                    # feedback point player blocked right
+                elif self.player.get_blocked_right() and self.player.finishedCrouching and not self.player.get_lerping():
+                    # TODO feedback point player blocked right
                     self.queue.pop(0)
                     return 0, False
             case 1:
                 if not self.player.get_blocked_left() and not self.player.get_lerping() and scroll > 0 and not self.player.jumping and self.player.finishedCrouching:
                     self.player.moveLeft(scroll)
-                    goal_scroll = scroll - self.tileSize / 2
+                    goal_scroll = - 1
                     scrolling = True
                     self.queue.pop(0)
                     return goal_scroll, scrolling
-                elif self.player.get_blocked_left() or scroll == 0 and self.player.finishedCrouching and not self.player.get_lerping:
-                    # feedback point player blocked left (maybe hurt visually)
+                elif self.player.get_blocked_left() or scroll == 0 and self.player.finishedCrouching and not self.player.get_lerping():
+                    # TODO feedback point player blocked left (maybe hurt visually)
                     self.queue.pop(0)
                     return 0, False
             case 2:
-                if not self.player.get_lerping() and not self.player.jumping and not self.player.falling and self.player.finishedCrouching:
+                # print(self.player.get_blocked_above(), self.player.finishedCrouching, self.player.get_lerping())
+                if not self.player.get_lerping() and not self.player.get_blocked_above() and not self.player.jumping and not self.player.falling and self.player.finishedCrouching:
                     self.player.jump()
                     self.queue.pop(0)
                     scrolling = False
                     return 0, scrolling
+                # TODO feedback point player blocked above
+                elif self.player.get_blocked_above() and self.player.finishedCrouching and not self.player.get_lerping():
+                    self.queue.pop(0)
+                    return 0, False
+
             case 3:
                 if not self.player.get_lerping() and not self.player.jumping and not self.player.falling:
                     self.player.crouch()
@@ -115,9 +119,6 @@ class InputBoxValidator:
                     return 0, scrolling
             case _:
                 print("Not an action.")
-        if len(self.queue) == 0:
-            print("stopping sound")
-            self.player.stopRunSound()
 
     def get_queue(self):
         if not self.queue and not self.finished:

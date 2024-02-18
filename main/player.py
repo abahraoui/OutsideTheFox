@@ -22,12 +22,14 @@ class Player(pygame.sprite.Sprite):
         self.moving = False
         self.blockedRight = False
         self.blockedLeft = False
+        self.blockedAbove = False
+        self.blockedBelow = False
         f = pygame.font.Font('freesansbold.ttf', 24)
         txt = f.render('Player', True, 'navy')
         self.text = txt
         self.image = pygame.Surface((tileSize + 3, 64))
         self.normal_rect = self.image.get_rect()
-        self.crouching_rect = pygame.Rect(0, 0, self.normal_rect.width, 32)
+        self.crouching_rect = pygame.Rect(0, 0, self.normal_rect.width, tileSize + 2)
         self.rect = self.normal_rect
         self.colliding = False
         self.runningSound = pygame.mixer.Sound(
@@ -43,6 +45,7 @@ class Player(pygame.sprite.Sprite):
         self.finished = False
         self.crouching = False
         self.finishedCrouching = True
+        self.crouchingCooldown = None
 
     def setLocation(self, x, y):
         self.x = x
@@ -150,8 +153,8 @@ class Player(pygame.sprite.Sprite):
         else:
             display.blit(animation, (self.x - 48, self.y - 48))
         pygame.draw.rect(pygame.display.get_surface(), 'red', self.rect, 3)  # Debug Player's hit box.
-        pygame.draw.rect(pygame.display.get_surface(), 'purple',
-                         pygame.Rect(self.rect.x, self.rect.y, self.rect.width, self.rect.height), 3)
+        # pygame.draw.rect(pygame.display.get_surface(), 'purple',
+        #                  pygame.Rect(self.rect.x, self.rect.y, self.rect.width, self.rect.height), 3)
         if (
                 self.lerping or self.moving) and not self.crouching and not self.jumping and not self.falling and self.action != 1:
             self.action = 1
@@ -187,10 +190,14 @@ class Player(pygame.sprite.Sprite):
         if tile not in self.collider:
             self.collider[tile] = collider
             self.process_collider()
+        elif tile in self.collider:
+            self.collider[tile] = collider
+            self.process_collider()
 
     def not_colliding(self, tile):
         if tile in self.collider:
             self.collider.pop(tile)
+            self.process_collider()
 
     def process_collider(self):
         right = False
@@ -211,21 +218,27 @@ class Player(pygame.sprite.Sprite):
                 below = True
             if coll_y < y and (coll_x <= x + width / 2 <= coll_x + self.tileSize):
                 above = True
-            if coll_x > x and (y < coll_y < y + height - 1 or y < coll_y + self.tileSize < y + height):
-                # print(y, coll_y - self.tileSize, y + height - 1)
-                # print(y < coll_y - self.tileSize < y + height)
+            if coll_x > x and (y < coll_y < y + height - 1 or y + 1 < coll_y + self.tileSize - 3 < y + height):
                 right = True
                 self.xVelocity = 0
-            if coll_x < x and (y < coll_y < y + height - 1 or y < coll_y + self.tileSize < y + height):
+            if coll_x < x and (y < coll_y < y + height - 1 or y + 1 < coll_y + self.tileSize - 3 < y + height):
                 left = True
                 self.xVelocity = 0
         if below:
             self.falling = False
+            self.blockedBelow = True
+            self.y = math.ceil(self.y)
         else:
             self.falling = True
+            self.blockedBelow = False
         if above and self.jumping:
             self.lerping = False
             self.y = math.floor(self.y)
+        elif above:
+            self.blockedAbove = True
+        else:
+            self.blockedAbove = False
+
         if right:
             self.blockedRight = True
         else:
@@ -283,7 +296,6 @@ class Player(pygame.sprite.Sprite):
             self.hurtLastCooldown = pygame.time.get_ticks()
 
     def jump(self):
-        # TODO restrict jump when crouching if under something.
         # if not self.lerping and not self.jumping:
         self.jumping = True
         if self.crouching:
@@ -294,6 +306,7 @@ class Player(pygame.sprite.Sprite):
 
     def crouch(self):
         if not self.crouching:
+            self.crouchingCooldown = pygame.time.get_ticks()
             self.crouching = True
             self.finishedCrouching = False
             self.falling = True
@@ -303,6 +316,8 @@ class Player(pygame.sprite.Sprite):
             self.reachedRightBoundary = False
 
     def do(self):
+        if not self.moving:
+            self.stopRunSound()
 
         self.keys()
         self.move()
@@ -311,7 +326,7 @@ class Player(pygame.sprite.Sprite):
         if self.y > self.H or self.finished:
             return True
 
-        if self.crouching and not self.falling:
+        if self.crouching and not self.falling and pygame.time.get_ticks() > self.crouchingCooldown + 300:
             self.finishedCrouching = True
 
         if self.lerping and not self.reachedRightBoundary:
@@ -358,6 +373,11 @@ class Player(pygame.sprite.Sprite):
     def get_blocked_left(self):
         return self.blockedLeft
 
+    def get_blocked_above(self):
+        return self.blockedAbove
+
+    def get_blocked_below(self):
+        return self.blockedBelow
     def stop_scroll(self):
         if self.blockedLeft:
             return "L"

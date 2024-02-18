@@ -162,10 +162,12 @@ def draw_debug_console():
     if P:
         draw_text(f"Player X: {P.get_location()[0]}", font, 'navy', 250, H + 15)
         draw_text(f"Player Y: {P.get_location()[1]}", font, 'navy', 1100, H + 15)
-        if P.last_collider():
-            draw_text(f"Collider X: {P.last_collider()[0][0]}", font, 'navy', 250, H + 40)
-            draw_text(f"Collider Y: {P.last_collider()[0][1]}", font, 'navy', 675, H + 40)
-            draw_text(f"Num Coll: {P.last_collider()[1]}", font, 'navy', 1100, H + 40)
+        # if P.last_collider():
+        #     draw_text(f"Collider X: {P.last_collider()[0][0]}", font, 'navy', 250, H + 40)
+        #     draw_text(f"Collider Y: {P.last_collider()[0][1]}", font, 'navy', 675, H + 40)
+        #     draw_text(f"Num Coll: {P.last_collider()[1]}", font, 'navy', 1100, H + 40)
+        draw_text(f"Blocked Above: {P.get_blocked_above()}", font, 'navy', 250, H + 40)
+        draw_text(f"Blocked Below: {P.get_blocked_below()}", font, 'navy', 800, H + 40)
         draw_text(f"Blocked Left: {P.blocked_left_right()[0]}", font, 'navy', 250, H + 65)
         draw_text(f"Blocked Right: {P.blocked_left_right()[1]}", font, 'navy', 800, H + 65)
         draw_text(f"Scroll:{scroll}", font, 'indigo', 700, H + 15)
@@ -400,7 +402,7 @@ while True:
                 answer = input_validator.process_queue(scroll)
                 if answer:
                     draw_world()
-                    goal_scroll = answer[0]
+                    goal_scroll += answer[0] * TILE_SIZE / 2
                     scrolling = answer[1]
 
             if P.get_reach_right_boundary():  # P.get_location()[0] >= (W - 150):
@@ -417,6 +419,7 @@ while True:
         P = player.Player(3, 30, player_animation_list, (W, H), TILE_SIZE)
         scroll = 0
         scrolling = False
+        goal_scroll = 0
         P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
         input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W)
         paused = True
