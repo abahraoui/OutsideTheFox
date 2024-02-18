@@ -1,13 +1,10 @@
 import math
 import pickle
-import random
 import sys
-from copy import copy
 from itertools import cycle
 import startscreen
 
 import pygame
-import square as sq
 import player
 import tile as tile_class
 from pygame.locals import *
@@ -15,6 +12,7 @@ import spritesheet
 import userinputfield
 import inputboxvalidator
 import usermanual
+import cherry_tile
 
 
 # Event handler
@@ -86,15 +84,6 @@ def events():
                         user_input.add_text(event.unicode)
 
 
-def spawnHandler():
-    global squares
-    global spawnCounter
-    spawnCounter += 1
-    '''Use clock ticks rather than this method for both Spawns and Player anims'''
-    if spawnCounter % 100 == 0:
-        squares.add(sq.Square(random.choice(colors), random.randint(0, W), 0, (W, H)))
-
-
 # Draws and makes the background scrollable.
 def draw_bg():
     screen.fill('crimson')
@@ -120,7 +109,7 @@ def change_scroll_direction():
 
 # Draw each tile based on position in the grid.
 def draw_world():
-    global coordinates_filled
+    global coordinates_filled, score
     ground.empty()
     for y, row in enumerate(world_data):
         for x, tile in enumerate(row):
@@ -136,6 +125,21 @@ def draw_world():
                     # pygame.draw.rect(screen, "blue", (x * TILE_SIZE - scroll, y*TILE_SIZE, TILE_SIZE, TILE_SIZE), 3)
                     if P and t.colliderect(P):
                         P.set_finished()
+                elif tile == 21:
+                    if (y, x) not in cherry_data:
+                        cherry = cherry_tile.Cherry(x * TILE_SIZE - scroll, y * TILE_SIZE, cherry_animation_list,
+                                                    (y, x))
+                        cherry_data[(y, x)] = cherry
+                    elif cherry_data[(y, x)] != "Removed":
+                        cherry_data[(y, x)].set_location((x * TILE_SIZE - scroll, y * TILE_SIZE))
+                    if cherry_data[(y, x)] != "Removed":
+                        cherry_data[(y, x)].draw()
+                        if P and cherry_data[(y, x)].colliderect(P):
+                            jump_sound = pygame.mixer.Sound("assets/audio/sounds/348112__matrixxx__crunch.wav")
+                            jump_sound.play()
+                            jump_sound.set_volume(1)
+                            cherry_data[(y, x)] = "Removed"
+                            score += 100
                 elif tile not in background_tiles:
                     t = tile_class.Tile(x * TILE_SIZE - scroll, y * TILE_SIZE, (W, H), tiles_list[tile], tile)
                     ground.add(t)
@@ -214,7 +218,8 @@ def draw_grid():
         rounded_p_y = P.get_location()[1] - P.get_location()[1] % TILE_SIZE
         if P.get_location()[1] + TILE_SIZE * 5 >= y >= P.get_location()[1] - TILE_SIZE * 5:
             rounded_p_x = P.get_location()[0]
-            offset_x = (rounded_p_x - (rounded_p_x) % TILE_SIZE) - abs(row * TILE_SIZE - rounded_p_y) + 5 * TILE_SIZE  # * (rounded_p_x / 225) # 225 = 1, 315
+            offset_x = (rounded_p_x - (rounded_p_x) % TILE_SIZE) - abs(
+                row * TILE_SIZE - rounded_p_y) + 5 * TILE_SIZE  # * (rounded_p_x / 225) # 225 = 1, 315
             # print(row, offset_x)
             # if offset_x >= rounded_p_x:  # 450 -> row 10
             #     offset_x = offset_x - 2 * (offset_x + rounded_p_x)
@@ -270,9 +275,10 @@ reset_scroll = False
 ROWS = 16
 MAX_COLS = 150
 TILE_SIZE = H // ROWS
-TILE_TYPES = 15
+TILE_TYPES = 22
 level = 0
-background_tiles = [2]
+score = 0
+background_tiles = [2, 15, 16, 17, 18, 19, 20]
 
 # Loads the tiles for the level editor.
 tiles_list = []
@@ -280,6 +286,14 @@ for x in range(TILE_TYPES):
     img = pygame.image.load(f'assets/tile/{x}.png').convert_alpha()
     if x == 14:
         img = pygame.transform.scale(img, (TILE_SIZE, 2 * TILE_SIZE))
+    elif x in [17]:
+        img = pygame.transform.scale(img, (5 * TILE_SIZE, 5 * TILE_SIZE))
+    elif x in [18, 15, 16]:
+        img = pygame.transform.scale(img, (4 * TILE_SIZE, 4 * TILE_SIZE))
+    elif x in [19]:
+        img = pygame.transform.scale(img, (3 * TILE_SIZE, 3 * TILE_SIZE))
+    elif x in []:
+        img = pygame.transform.scale(img, (2 * TILE_SIZE, 2 * TILE_SIZE))
     elif x == 13:
         img = pygame.transform.scale(img, (TILE_SIZE, 0.5 * TILE_SIZE))
     else:
@@ -289,6 +303,7 @@ for x in range(TILE_TYPES):
 
 # Init the world_data list.
 world_data = []
+cherry_data = {}
 world_coordinates = []
 coordinates_filled = False
 for i in range(ROWS):
@@ -316,17 +331,24 @@ bg = pygame.image.load('assets/back.png').convert_alpha()
 bg = pygame.transform.scale(bg, (W, H))
 md = pygame.image.load('assets/middle.png').convert_alpha()
 md = pygame.transform.scale(md, (500, 450))
-
-sprite_sheet_image = pygame.image.load('assets/player_idle.png').convert_alpha()
-sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
+BLACK = (0, 0, 0)
 frame = 0
 last_update = pygame.time.get_ticks()
+cherry_animation_list = []
+
+sprite_sheet_image = pygame.image.load('assets/cherry_anim.png').convert_alpha()
+sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
+temp_img = None
+for i in range(5):
+    temp_img = sprite_sheet.get_image(i, 21, 21, 2, BLACK)
+    cherry_animation_list.append(temp_img)
+
 animation_cooldown = 500
 animation_steps = [4, 6, 2, 2, 2]
 action = 0
 animation_assets = ['assets/player_idle.png', 'assets/player_run.png', 'assets/player_jump.png', 'assets/player_hurt'
-                                                                                                 '.png', 'assets/player_crouch.png']
-BLACK = (0, 0, 0)
+                                                                                                 '.png',
+                    'assets/player_crouch.png']
 
 player_animation_list = []
 for x in range(len(animation_steps)):
@@ -386,10 +408,7 @@ while True:
             P = None
 
         else:
-            # squares.update()
-            # squares.draw(screen)
-            # spawnHandler()
-
+            draw_text(f"Score: {score}", font, "red", 0, 0)
             # scroll_world_free_movement()  # Uncomment to scroll with Q-D movement
 
             if scrolling:
