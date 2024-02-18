@@ -124,7 +124,7 @@ class UserManual:
                 self.change_state('H')
 
             text_surface = pygame.font.Font('assets/joystix monospace.otf', 32).render("X", True, "red")
-            pygame.draw.rect(screen, "blue", self.active_rect)
+            pygame.draw.rect(screen, "blue", self.active_rect, 0, 3)
             screen.blit(text_surface, (self.x + 218, self.y + 30))
             start_y = self.y + 80
 

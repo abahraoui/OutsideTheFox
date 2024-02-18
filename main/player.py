@@ -25,8 +25,10 @@ class Player(pygame.sprite.Sprite):
         f = pygame.font.Font('freesansbold.ttf', 24)
         txt = f.render('Player', True, 'navy')
         self.text = txt
-        self.image = pygame.Surface((48, 64))
-        self.rect = self.image.get_rect()
+        self.image = pygame.Surface((tileSize + 3, 64))
+        self.normal_rect = self.image.get_rect()
+        self.crouching_rect = pygame.Rect(0, 0, self.normal_rect.width, 32)
+        self.rect = self.normal_rect
         self.colliding = False
         self.runningSound = pygame.mixer.Sound(
             "assets/audio/sounds/419181__14gpanskahonc_petr__14-man-fast-walking-dirt.wav")
@@ -39,6 +41,8 @@ class Player(pygame.sprite.Sprite):
         self.hurt = True
         self.hurtLastCooldown = pygame.time.get_ticks()
         self.finished = False
+        self.crouching = False
+        self.finishedCrouching = True
 
     def setLocation(self, x, y):
         self.x = x
@@ -92,8 +96,8 @@ class Player(pygame.sprite.Sprite):
                 self.playRunSound()
         else:
             self.xVelocity = 0
-            #self.notMoving()
-            #self.stopRunSound()
+            # self.notMoving()
+            # self.stopRunSound()
         if keys[K_SPACE] and not self.jumping and not self.falling:
             self.jumpSound()
             self.jumping = True
@@ -123,8 +127,13 @@ class Player(pygame.sprite.Sprite):
         self.rect.center = (self.x, self.y)
 
     def draw(self):
+
+        if self.crouching:
+            self.rect = self.crouching_rect
+        else:
+            self.rect = self.normal_rect
         display = pygame.display.get_surface()
-        pygame.display.get_surface().blit(self.text, self.textRect)
+        # pygame.display.get_surface().blit(self.text, self.textRect)
         current_time = pygame.time.get_ticks()
         if current_time - self.lastUpdate >= self.animationCooldown:
             self.currentAnim += 1
@@ -136,43 +145,43 @@ class Player(pygame.sprite.Sprite):
         else:
             animation = pygame.transform.flip(self.animationList[self.action][self.currentAnim], True, False)
             animation.set_colorkey((0, 0, 0))
-        display.blit(animation, (self.x - 48, self.y - 48))
+        if self.crouching:
+            display.blit(animation, (self.x - 48, self.y - 56))
+        else:
+            display.blit(animation, (self.x - 48, self.y - 48))
         pygame.draw.rect(pygame.display.get_surface(), 'red', self.rect, 3)  # Debug Player's hit box.
-
-        if (self.lerping or self.moving) and not self.jumping and not self.falling and self.action != 1:
+        pygame.draw.rect(pygame.display.get_surface(), 'purple',
+                         pygame.Rect(self.rect.x, self.rect.y, self.rect.width, self.rect.height), 3)
+        if (
+                self.lerping or self.moving) and not self.crouching and not self.jumping and not self.falling and self.action != 1:
             self.action = 1
             self.animationCooldown = 100
             self.currentAnim = 0
         elif not (
-                self.lerping or self.moving) and not self.jumping and not self.falling and self.action != 0 and not self.hurt:
+                self.lerping or self.moving) and not self.crouching and not self.jumping and not self.falling and self.action != 0 and not self.hurt:
             self.action = 0
             self.animationCooldown = 250
             self.currentAnim = 0
-            self.stopRunSound()
+        elif self.crouching and not self.jumping and not self.falling and self.action != 4:
+            self.action = 4
+            self.animationCooldown = 250
+            self.currentAnim = 0
         elif self.jumping and self.action != 2:
             self.action = 2
             self.animationCooldown = 250
             self.currentAnim = 0
-            self.stopRunSound()
         elif self.falling and self.action != 2:
             self.action = 2
             self.animationCooldown = 250
             self.currentAnim = 0
-            self.stopRunSound()
-        elif self.hurt and self.action != 3:
-            self.action = 3
-            self.currentAnim = 0
-            self.animationCooldown = 250
+        # elif self.hurt and self.action != 3:
+        #     self.action = 3
+        #     self.currentAnim = 0
+        #     self.animationCooldown = 250
 
         if self.hurt and pygame.time.get_ticks() > self.hurtLastCooldown + 500:
             self.hurt = False
         # print(self.action.__str__() + ' : ' + self.currentAnim.__str__()) #Debug anim
-
-    def resetJump(self, collider):
-        self.jumping = False
-        self.falling = False
-        self.onPlatform = True
-        self.collider = collider
 
     def is_colliding(self, collider, tile):
         if tile not in self.collider:
@@ -180,7 +189,6 @@ class Player(pygame.sprite.Sprite):
             self.process_collider()
 
     def not_colliding(self, tile):
-        # self.colliding = False
         if tile in self.collider:
             self.collider.pop(tile)
 
@@ -189,19 +197,26 @@ class Player(pygame.sprite.Sprite):
         left = False
         above = False
         below = False
+        y = self.rect.y
+        x = self.rect.x
+        width = self.rect.width
+        height = self.rect.height
         for coll in self.collider:
             coll_x = self.collider[coll][0]
             coll_y = self.collider[coll][1]
-            if coll_y > self.y and ((coll_x <= self.x - 21 <= coll_x +
-                                                     self.tileSize) or (coll_x <= self.x + 21 <= coll_x + self.tileSize)):
+            pygame.draw.rect(pygame.display.get_surface(), "lightblue",
+                             pygame.Rect(coll_x, coll_y, self.tileSize, self.tileSize), 3)
+
+            if coll_y > y and (coll_x <= x + width / 2 <= coll_x + self.tileSize):
                 below = True
-            if coll_y + 64 < self.y and ((coll_x <= self.x - 21 <= coll_x +
-                                                          self.tileSize) or (coll_x <= self.x + 21 <= coll_x + self.tileSize)):
+            if coll_y < y and (coll_x <= x + width / 2 <= coll_x + self.tileSize):
                 above = True
-            if coll_x > self.x and self.y - 31 < coll_y < self.y + 31:
+            if coll_x > x and (y < coll_y < y + height - 1 or y < coll_y + self.tileSize < y + height):
+                # print(y, coll_y - self.tileSize, y + height - 1)
+                # print(y < coll_y - self.tileSize < y + height)
                 right = True
                 self.xVelocity = 0
-            if coll_x < self.x and self.y - 31 < coll_y < self.y + 31:
+            if coll_x < x and (y < coll_y < y + height - 1 or y < coll_y + self.tileSize < y + height):
                 left = True
                 self.xVelocity = 0
         if below:
@@ -213,16 +228,15 @@ class Player(pygame.sprite.Sprite):
             self.y = math.floor(self.y)
         if right:
             self.blockedRight = True
-            self.blockedLeft = False
         else:
             self.blockedRight = False
         if left:
             self.blockedLeft = True
-            self.blockedRight = False
         else:
             self.blockedLeft = False
 
         return right
+
     def checkRightX(self):
         check_boundary = self.x + self.tileSize
         if check_boundary < self.W - 149:
@@ -269,23 +283,36 @@ class Player(pygame.sprite.Sprite):
             self.hurtLastCooldown = pygame.time.get_ticks()
 
     def jump(self):
+        # TODO restrict jump when crouching if under something.
         # if not self.lerping and not self.jumping:
         self.jumping = True
+        if self.crouching:
+            self.crouching = False
         self.goalY = self.y - 1.5 * self.tileSize
         self.lerping = True
         self.jumpSound()
+
+    def crouch(self):
+        if not self.crouching:
+            self.crouching = True
+            self.finishedCrouching = False
+            self.falling = True
 
     def reset_right_boundary(self):
         if self.reachedRightBoundary:
             self.reachedRightBoundary = False
 
     def do(self):
+
         self.keys()
         self.move()
         self.process_collider()
         self.draw()
         if self.y > self.H or self.finished:
             return True
+
+        if self.crouching and not self.falling:
+            self.finishedCrouching = True
 
         if self.lerping and not self.reachedRightBoundary:
             if self.jumping:
@@ -297,15 +324,16 @@ class Player(pygame.sprite.Sprite):
             if self.moving:
                 self.x = pygame.math.lerp(self.x, self.goalX, 0.05)
                 if math.ceil(self.x) == math.ceil(self.goalX) or math.floor(self.x) == math.floor(self.goalX):
-                        self.x = self.goalX
-                        self.lerping = False
-                        self.notMoving()
-                        #self.stopRunSound()
+                    self.x = self.goalX
+                    self.lerping = False
+                    self.notMoving()
+                    # self.stopRunSound()
 
         return False
 
     def set_finished(self):
         self.finished = True
+
     def get_reach_right_boundary(self):
         return self.reachedRightBoundary
 
