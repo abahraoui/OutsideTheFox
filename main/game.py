@@ -131,21 +131,16 @@ def draw_world():
                     coordinates_filled = True
             if tile >= 0:
                 if tile == 14:
-                    t = tile_class.Tile(x * TILE_SIZE - scroll, y * TILE_SIZE, (W, H), tiles_list[tile])
+                    t = tile_class.Tile(x * TILE_SIZE - scroll, y * TILE_SIZE, (W, H), tiles_list[tile], tile)
                     t.draw()
-                    pygame.draw.rect(screen, "blue", (x * TILE_SIZE - scroll, y*TILE_SIZE, TILE_SIZE, TILE_SIZE), 3)
+                    # pygame.draw.rect(screen, "blue", (x * TILE_SIZE - scroll, y*TILE_SIZE, TILE_SIZE, TILE_SIZE), 3)
                     if P and t.colliderect(P):
                         P.set_finished()
                 elif tile not in background_tiles:
-                    t = tile_class.Tile(x * TILE_SIZE - scroll, y * TILE_SIZE, (W, H), tiles_list[tile])
+                    t = tile_class.Tile(x * TILE_SIZE - scroll, y * TILE_SIZE, (W, H), tiles_list[tile], tile)
                     ground.add(t)
                     t.draw()
-                    dummy = copy(P)
-                    if P.get_direction() == 'R':
-                        dummy.rect.x += 1
-                    else:
-                        dummy.rect.x -= 1
-                    if P and t.colliderect(dummy) and ground.__contains__(t):
+                    if P and t.colliderect(P) and ground.__contains__(t):
                         P.is_colliding((t.x, t.y), (y, x))
                     elif P:
                         P.not_colliding((y, x))
@@ -281,7 +276,12 @@ background_tiles = [2]
 tiles_list = []
 for x in range(TILE_TYPES):
     img = pygame.image.load(f'assets/tile/{x}.png').convert_alpha()
-    img = pygame.transform.scale(img, (TILE_SIZE, TILE_SIZE))
+    if x == 14:
+        img = pygame.transform.scale(img, (TILE_SIZE, 2 * TILE_SIZE))
+    elif x == 13:
+        img = pygame.transform.scale(img, (TILE_SIZE, 0.5 * TILE_SIZE))
+    else:
+        img = pygame.transform.scale(img, (TILE_SIZE, TILE_SIZE))
     img.set_colorkey((0, 0, 0))
     tiles_list.append(img)
 
@@ -320,10 +320,10 @@ sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
 frame = 0
 last_update = pygame.time.get_ticks()
 animation_cooldown = 500
-animation_steps = [4, 6, 2, 2]
+animation_steps = [4, 6, 2, 2, 2]
 action = 0
 animation_assets = ['assets/player_idle.png', 'assets/player_run.png', 'assets/player_jump.png', 'assets/player_hurt'
-                                                                                                 '.png']
+                                                                                                 '.png', 'assets/player_crouch.png']
 BLACK = (0, 0, 0)
 
 player_animation_list = []
@@ -389,9 +389,6 @@ while True:
             # spawnHandler()
 
             # scroll_world_free_movement()  # Uncomment to scroll with Q-D movement
-            for square in squares:
-                if square.colliderect(P):
-                    P.resetJump(square)
 
             if scrolling:
                 scroll = pygame.math.lerp(scroll, goal_scroll, 0.05)

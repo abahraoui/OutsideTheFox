@@ -77,7 +77,7 @@ class InputBoxValidator:
     def process_queue(self, scroll):
         match self.queue[0]:
             case 0:
-                if not self.player.get_lerping() and not self.player.get_blocked_right() and not self.player.jumping:
+                if not self.player.get_lerping() and not self.player.get_blocked_right() and not self.player.jumping and self.player.finishedCrouching:
                     self.player.moveRight()
                     if self.player.get_reach_right_boundary():
                         goal_scroll = scroll + self.tileSize / 2 + self.W - 427.5
@@ -86,29 +86,38 @@ class InputBoxValidator:
                     scrolling = True
                     self.queue.pop(0)
                     return goal_scroll, scrolling
-                elif self.player.get_blocked_right():
+                elif self.player.get_blocked_right() and self.player.finishedCrouching and not self.player.get_lerping:
                     # feedback point player blocked right
                     self.queue.pop(0)
                     return 0, False
             case 1:
-                if not self.player.get_blocked_left() and not self.player.get_lerping() and scroll > 0 and not self.player.jumping:
+                if not self.player.get_blocked_left() and not self.player.get_lerping() and scroll > 0 and not self.player.jumping and self.player.finishedCrouching:
                     self.player.moveLeft(scroll)
                     goal_scroll = scroll - self.tileSize / 2
                     scrolling = True
                     self.queue.pop(0)
                     return goal_scroll, scrolling
-                elif self.player.get_blocked_left() or scroll == 0:
+                elif self.player.get_blocked_left() or scroll == 0 and self.player.finishedCrouching and not self.player.get_lerping:
                     # feedback point player blocked left (maybe hurt visually)
                     self.queue.pop(0)
                     return 0, False
             case 2:
-                if not self.player.get_lerping() and not self.player.jumping and not self.player.falling:
+                if not self.player.get_lerping() and not self.player.jumping and not self.player.falling and self.player.finishedCrouching:
                     self.player.jump()
+                    self.queue.pop(0)
+                    scrolling = False
+                    return 0, scrolling
+            case 3:
+                if not self.player.get_lerping() and not self.player.jumping and not self.player.falling:
+                    self.player.crouch()
                     self.queue.pop(0)
                     scrolling = False
                     return 0, scrolling
             case _:
                 print("Not an action.")
+        if len(self.queue) == 0:
+            print("stopping sound")
+            self.player.stopRunSound()
 
     def get_queue(self):
         if not self.queue and not self.finished:
@@ -130,3 +139,6 @@ class InputBoxValidator:
 
     def jump(self):
         self.queue.append(2)
+
+    def crouch(self):
+        self.queue.append(3)
