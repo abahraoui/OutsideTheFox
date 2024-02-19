@@ -20,6 +20,7 @@ class InputBoxValidator:
         self.visitor = user_execution_visitor.UserExecutionVisitor()
         self.finished = True
         self.lastCooldown = 0
+        self.lastQueueCooldown = 0
 
     def set_text(self, text_to_validate):
         self.text_list = text_to_validate
@@ -83,10 +84,12 @@ class InputBoxValidator:
                         goal_scroll = 1
                     scrolling = True
                     self.queue.pop(0)
+                    self.lastQueueCooldown = pygame.time.get_ticks()
                     return goal_scroll, scrolling
                 elif self.player.get_blocked_right() and self.player.finishedCrouching and not self.player.get_lerping():
                     # TODO feedback point player blocked right
                     self.queue.pop(0)
+                    self.lastQueueCooldown = pygame.time.get_ticks()
                     return 0, False
             case 1:
                 if not self.player.get_blocked_left() and not self.player.get_lerping() and scroll > 0 and not self.player.jumping and self.player.finishedCrouching:
@@ -94,10 +97,12 @@ class InputBoxValidator:
                     goal_scroll = - 1
                     scrolling = True
                     self.queue.pop(0)
+                    self.lastQueueCooldown = pygame.time.get_ticks()
                     return goal_scroll, scrolling
                 elif self.player.get_blocked_left() or scroll == 0 and self.player.finishedCrouching and not self.player.get_lerping():
                     # TODO feedback point player blocked left (maybe hurt visually)
                     self.queue.pop(0)
+                    self.lastQueueCooldown = pygame.time.get_ticks()
                     return 0, False
             case 2:
                 # print(self.player.get_blocked_above(), self.player.finishedCrouching, self.player.get_lerping())
@@ -105,10 +110,12 @@ class InputBoxValidator:
                     self.player.jump()
                     self.queue.pop(0)
                     scrolling = False
+                    self.lastQueueCooldown = pygame.time.get_ticks()
                     return 0, scrolling
                 # TODO feedback point player blocked above
                 elif self.player.get_blocked_above() and self.player.finishedCrouching and not self.player.get_lerping():
                     self.queue.pop(0)
+                    self.lastQueueCooldown = pygame.time.get_ticks()
                     return 0, False
 
             case 3:
@@ -116,7 +123,36 @@ class InputBoxValidator:
                     self.player.crouch()
                     self.queue.pop(0)
                     scrolling = False
+                    self.lastQueueCooldown = pygame.time.get_ticks()
                     return 0, scrolling
+            case 4:
+                if not self.player.get_lerping() and not self.player.jumping and not self.player.falling:
+                    self.player.climbUp()
+                    self.queue.pop(0)
+                    scrolling = False
+                    self.lastQueueCooldown = pygame.time.get_ticks()
+                    return 0, scrolling
+                # TODO feedback point player cant climb
+                elif not self.player.canClimb:
+                    self.queue.pop(0)
+                    self.lastQueueCooldown = pygame.time.get_ticks()
+                    return 0, False
+            case 5:
+                print(self.player.get_lerping(), self.player.jumping, self.player.falling, self.player.get_blocked_below(), self.player.canClimb)
+                if not self.player.get_lerping() and not self.player.jumping and not self.player.get_blocked_below() and self.player.canClimb:
+                    self.player.climbDown()
+                    self.queue.pop(0)
+                    scrolling = False
+                    self.lastQueueCooldown = pygame.time.get_ticks()
+                    return 0, scrolling
+                # TODO feedback point player cant climb or cant climb
+                elif self.player.get_blocked_below() or not self.player.canClimb and pygame.time.get_ticks() > self.lastQueueCooldown + 500:
+                    print(self.player.ladders)
+                    print(self.player.get_blocked_below() or not self.player.canClimb and pygame.time.get_ticks() > self.lastQueueCooldown + 500)
+                    self.queue.pop(0)
+                    self.lastQueueCooldown = pygame.time.get_ticks()
+                    return 0, False
+
             case _:
                 print("Not an action.")
 
@@ -143,3 +179,9 @@ class InputBoxValidator:
 
     def crouch(self):
         self.queue.append(3)
+
+    def climbUp(self):
+        self.queue.append(4)
+
+    def climbDown(self):
+        self.queue.append(5)

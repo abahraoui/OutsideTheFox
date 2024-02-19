@@ -46,6 +46,10 @@ class Player(pygame.sprite.Sprite):
         self.crouching = False
         self.finishedCrouching = True
         self.crouchingCooldown = None
+        self.canClimb = False
+        self.climbing = False
+        self.climbingDirection = 'U'
+        self.ladders = []
 
     def setLocation(self, x, y):
         self.x = x
@@ -90,13 +94,13 @@ class Player(pygame.sprite.Sprite):
             self.flipAnim('L')
             if self.action == 1:
                 self.playRunSound()
-        elif keys[K_d]:
-            if not self.blockedRight:
-                self.xVelocity = self.velocity
-            self.moving = True
-            self.flipAnim('R')
-            if self.action == 1:
-                self.playRunSound()
+        # elif keys[K_d]:
+        #     if not self.blockedRight:
+        #         self.xVelocity = self.velocity
+        #     self.moving = True
+        #     self.flipAnim('R')
+        #     if self.action == 1:
+        #         self.playRunSound()
         else:
             self.xVelocity = 0
             # self.notMoving()
@@ -156,12 +160,12 @@ class Player(pygame.sprite.Sprite):
         # pygame.draw.rect(pygame.display.get_surface(), 'purple',
         #                  pygame.Rect(self.rect.x, self.rect.y, self.rect.width, self.rect.height), 3)
         if (
-                self.lerping or self.moving) and not self.crouching and not self.jumping and not self.falling and self.action != 1:
+                self.lerping or self.moving) and not self.climbing and not self.crouching and not self.jumping and not self.falling and self.action != 1:
             self.action = 1
             self.animationCooldown = 100
             self.currentAnim = 0
         elif not (
-                self.lerping or self.moving) and not self.crouching and not self.jumping and not self.falling and self.action != 0 and not self.hurt:
+                self.lerping or self.moving) and not self.climbing and not self.crouching and not self.jumping and not self.falling and self.action != 0 and not self.hurt:
             self.action = 0
             self.animationCooldown = 250
             self.currentAnim = 0
@@ -169,11 +173,15 @@ class Player(pygame.sprite.Sprite):
             self.action = 4
             self.animationCooldown = 250
             self.currentAnim = 0
-        elif self.jumping and self.action != 2:
+        elif self.climbing and not self.jumping and self.action != 5:
+            self.action = 5
+            self.animationCooldown = 250
+            self.currentAnim = 0
+        elif self.jumping and not self.climbing and self.action != 2:
             self.action = 2
             self.animationCooldown = 250
             self.currentAnim = 0
-        elif self.falling and self.action != 2:
+        elif self.falling and not self.climbing and self.action != 2:
             self.action = 2
             self.animationCooldown = 250
             self.currentAnim = 0
@@ -228,8 +236,10 @@ class Player(pygame.sprite.Sprite):
             self.falling = False
             self.blockedBelow = True
             self.y = math.ceil(self.y)
-        else:
+        elif not self.climbing:
             self.falling = True
+            self.blockedBelow = False
+        else:
             self.blockedBelow = False
         if above and self.jumping:
             self.lerping = False
@@ -311,18 +321,49 @@ class Player(pygame.sprite.Sprite):
             self.finishedCrouching = False
             self.falling = True
 
+    def climbUp(self):
+        if self.canClimb and self.blockedBelow:
+            self.climbing = True
+            self.lerping = True
+            self.climbingDirection = 'U'
+
+    def climbDown(self):
+        if self.canClimb and not self.blockedBelow:
+            self.climbing = True
+            self.lerping = True
+            self.climbingDirection = 'D'
+
     def reset_right_boundary(self):
         if self.reachedRightBoundary:
             self.reachedRightBoundary = False
 
     def do(self):
-        if not self.moving:
-            self.stopRunSound()
-
         self.keys()
         self.move()
         self.process_collider()
         self.draw()
+
+        if not self.moving:
+            self.stopRunSound()
+
+        if len(self.ladders) > 0:
+            self.canClimb = True
+        else:
+            self.canClimb = False
+
+        if self.climbing:
+            if self.climbingDirection == 'U':
+                self.y -= self.velocity / 2
+            elif self.climbingDirection == 'D':
+                self.y += self.velocity / 3
+
+        if self.climbing and not self.canClimb and self.climbingDirection == 'U':
+            self.climbing = False
+            self.lerping = False
+        elif self.climbing and (not self.canClimb or self.blockedBelow) and self.climbingDirection == 'D':
+            self.climbing = False
+            self.lerping = False
+            self.y -= 10
         if self.y > self.H or self.finished:
             return True
 
@@ -348,6 +389,14 @@ class Player(pygame.sprite.Sprite):
 
     def set_finished(self):
         self.finished = True
+
+    def add_ladder(self, value):
+        if value not in self.ladders:
+            self.ladders.append(value)
+
+    def remove_ladder(self, value):
+        if value in self.ladders:
+            self.ladders.remove(value)
 
     def get_reach_right_boundary(self):
         return self.reachedRightBoundary

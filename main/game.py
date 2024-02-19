@@ -140,6 +140,14 @@ def draw_world():
                             jump_sound.set_volume(1)
                             cherry_data[(y, x)] = "Removed"
                             score += 100
+                elif tile == 9:
+                    t = tile_class.Tile(x * TILE_SIZE - scroll, y * TILE_SIZE, (W, H), tiles_list[tile], tile)
+                    t.draw()
+                    if P and t.colliderect(P):
+                        P.add_ladder((y, x))
+                    else:
+                        P.remove_ladder((y, x))
+
                 elif tile not in background_tiles:
                     t = tile_class.Tile(x * TILE_SIZE - scroll, y * TILE_SIZE, (W, H), tiles_list[tile], tile)
                     ground.add(t)
@@ -344,11 +352,11 @@ for i in range(5):
     cherry_animation_list.append(temp_img)
 
 animation_cooldown = 500
-animation_steps = [4, 6, 2, 2, 2]
+animation_steps = [4, 6, 2, 2, 2, 4]
 action = 0
 animation_assets = ['assets/player_idle.png', 'assets/player_run.png', 'assets/player_jump.png', 'assets/player_hurt'
                                                                                                  '.png',
-                    'assets/player_crouch.png']
+                    'assets/player_crouch.png', 'assets/player_climb.png']
 
 player_animation_list = []
 for x in range(len(animation_steps)):
@@ -408,7 +416,7 @@ while True:
             P = None
 
         else:
-            draw_text(f"Score: {score}", font, "red", 0, 0)
+            draw_text(f"Score: {score}", font, "magenta", 0, 0)
             # scroll_world_free_movement()  # Uncomment to scroll with Q-D movement
 
             if scrolling:

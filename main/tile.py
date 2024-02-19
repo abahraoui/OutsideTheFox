@@ -18,6 +18,7 @@ class Tile(pygame.sprite.Sprite):
     def draw(self):
         if self.id == 14:
             pygame.display.get_surface().blit(self.image, (self.x, self.y - 32))
+            pygame.draw.rect(pygame.display.get_surface(), 'BLUE', self.rect, 3)
         else:
             pygame.display.get_surface().blit(self.image, (self.x, self.y))
 
