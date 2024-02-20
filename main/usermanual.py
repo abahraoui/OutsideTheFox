@@ -70,11 +70,11 @@ class UserManual:
         self.page = 1
         next_button_surface = pygame.font.Font('assets/joystix monospace.otf', 32).render("→", True, (255, 255, 255))
         self.nextPageButton = button.Button(self.active_rect.right - 45, self.active_rect.bottom - 45,
-                                            next_button_surface, 1)
+                                            next_button_surface, 1, "lightgreen", "blue")
         previous_button_surface = pygame.font.Font('assets/joystix monospace.otf', 32).render("←", True,
                                                                                               (255, 255, 255))
         self.previousPageButton = button.Button(self.active_rect.left + 15, self.active_rect.bottom - 45,
-                                                previous_button_surface, 1)
+                                                previous_button_surface, 1, "lightgreen", "blue")
 
         self.tabs = ["Manual", "Level", "Hint"]
         self.tab_rects = [pygame.Rect(self.active_rect.left, self.active_rect.top, 135, self.active_rect.top + 25),
@@ -86,19 +86,19 @@ class UserManual:
                                                                                             (255, 255, 255))
         self.manualTabButton = button.Button(self.tab_rects[0].x,
                                              self.tab_rects[0].y + manual_button_surface.get_height() / 2,
-                                             manual_button_surface, 1.5)
+                                             manual_button_surface, 1.5, "white", "white")
 
         level_button_surface = pygame.font.Font('assets/joystix monospace.otf', 18).render("Level", True,
                                                                                            (255, 255, 255))
         self.levelTabButton = button.Button(self.tab_rects[1].x,
                                             self.tab_rects[1].y + level_button_surface.get_height() / 2,
-                                            level_button_surface, 1.4)
+                                            level_button_surface, 1.4, "white", "white")
 
         hint_button_surface = pygame.font.Font('assets/joystix monospace.otf', 18).render("Hint", True,
                                                                                           (255, 255, 255))
         self.hintTabButton = button.Button(self.tab_rects[2].x,
                                            self.tab_rects[2].y + hint_button_surface.get_height() / 2,
-                                           hint_button_surface, 1.6)
+                                           hint_button_surface, 1.6, "white", "white")
 
     def draw(self):
         screen = pygame.display.get_surface()
@@ -115,6 +115,8 @@ class UserManual:
             pygame.draw.circle(screen, "gold", (self.x + 250, self.y + 50), 35)
             text_surface = pygame.font.Font('assets/joystix monospace.otf', 32).render("?", True, (255, 255, 255))
             screen.blit(text_surface, (self.x + 236, self.y + 30))
+            text_surface = pygame.font.Font('assets/joystix monospace.otf', 24).render("Help", True, (0, 0, 128))
+            screen.blit(text_surface, (self.x + 216, self.y + 85))
         else:
             if self.manualTabButton.draw(screen):
                 self.change_state('M')

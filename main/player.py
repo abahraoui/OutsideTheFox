@@ -34,6 +34,8 @@ class Player(pygame.sprite.Sprite):
         self.colliding = False
         self.runningSound = pygame.mixer.Sound(
             "assets/audio/sounds/419181__14gpanskahonc_petr__14-man-fast-walking-dirt.wav")
+        self.climbingSoundChannel = None
+        self.climbingSoundCooldown = pygame.time.get_ticks()
         self.collider = {}
         self.tileSize = tileSize
         self.goalX = 0
@@ -65,9 +67,17 @@ class Player(pygame.sprite.Sprite):
 
     def jumpSound(self):
         jump_sound = pygame.mixer.Sound("assets/audio/sounds/350905__cabled_mess__jump_c_05.wav")
-        jump_sound.play()
         jump_sound.set_volume(1)
+        jump_sound.play()
         # pygame.mixer.music.stop()
+
+    def climbSound(self):
+        if self.climbingSoundChannel is None or (not self.climbingSoundChannel.get_busy() and pygame.time.get_ticks() > self.climbingSoundCooldown + 500):
+            print("inside")
+            self.climbingSoundCooldown = pygame.time.get_ticks()
+            climbing_sound = pygame.mixer.Sound("assets/audio/sounds/478054__deleted_user_10023915__ladderclimb2.wav")
+            climbing_sound.set_volume(0.5)
+            self.climbingSoundChannel = climbing_sound.play()
 
     def playRunSound(self):
         if self.runningSound.get_num_channels() == 0 and not self.falling:
@@ -87,13 +97,13 @@ class Player(pygame.sprite.Sprite):
     def keys(self):
         keys = pygame.key.get_pressed()
 
-        if keys[K_q]:
-            if not self.blockedLeft:
-                self.xVelocity = -self.velocity
-            self.moving = True
-            self.flipAnim('L')
-            if self.action == 1:
-                self.playRunSound()
+        # if keys[K_q]:
+        #     if not self.blockedLeft:
+        #         self.xVelocity = -self.velocity
+        #     self.moving = True
+        #     self.flipAnim('L')
+        #     if self.action == 1:
+        #         self.playRunSound()
         # elif keys[K_d]:
         #     if not self.blockedRight:
         #         self.xVelocity = self.velocity
@@ -101,15 +111,15 @@ class Player(pygame.sprite.Sprite):
         #     self.flipAnim('R')
         #     if self.action == 1:
         #         self.playRunSound()
-        else:
-            self.xVelocity = 0
-            # self.notMoving()
-            # self.stopRunSound()
-        if keys[K_SPACE] and not self.jumping and not self.falling:
-            self.jumpSound()
-            self.jumping = True
-            self.freeJump = True
-            self.jumpCounter = 0
+        # else:
+        #     self.xVelocity = 0
+        #     # self.notMoving()
+        #     # self.stopRunSound()
+        # if keys[K_SPACE] and not self.jumping and not self.falling:
+        #     self.jumpSound()
+        #     self.jumping = True
+        #     self.freeJump = True
+        #     self.jumpCounter = 0
 
     def move(self):
         if 149 < self.x + self.xVelocity:
@@ -169,7 +179,7 @@ class Player(pygame.sprite.Sprite):
             self.action = 0
             self.animationCooldown = 250
             self.currentAnim = 0
-        elif self.crouching and not self.jumping and not self.falling and self.action != 4:
+        elif self.crouching and not self.climbing and not self.jumping and not self.falling and self.action != 4:
             self.action = 4
             self.animationCooldown = 250
             self.currentAnim = 0
@@ -356,6 +366,7 @@ class Player(pygame.sprite.Sprite):
                 self.y -= self.velocity / 2
             elif self.climbingDirection == 'D':
                 self.y += self.velocity / 3
+            self.climbSound()
 
         if self.climbing and not self.canClimb and self.climbingDirection == 'U':
             self.climbing = False
@@ -364,7 +375,9 @@ class Player(pygame.sprite.Sprite):
             self.climbing = False
             self.lerping = False
             self.y -= 10
+
         if self.y > self.H or self.finished:
+            self.stopRunSound()
             return True
 
         if self.crouching and not self.falling and pygame.time.get_ticks() > self.crouchingCooldown + 300:
@@ -427,6 +440,7 @@ class Player(pygame.sprite.Sprite):
 
     def get_blocked_below(self):
         return self.blockedBelow
+
     def stop_scroll(self):
         if self.blockedLeft:
             return "L"

@@ -3,27 +3,29 @@ import pygame
 
 # button class
 class Button():
-    def __init__(self, x, y, image, scale):
+    def __init__(self, x, y, image, scale, color_active, color_passive, rect=None):
         W = image.get_width()
         H = image.get_height()
         self.img = pygame.transform.scale(image, (int(W * scale), int(H * scale)))
-        self.rect = self.img.get_rect()
+        if rect is None:
+            self.rect = self.img.get_rect()
+        else:
+            self.rect = rect
         self.rect.topleft = (x, y)
         self.clicked = False
-        self.color_active = "lightgreen"
-        self.color_passive = "blue"
+        self.color_active = color_active  # "lightgreen"
+        self.color_passive = color_passive  # "blue"
         self.color = self.color_passive
         self.time_at_pressed = pygame.time.get_ticks()
 
-    def draw(self, surface):
+    def draw(self, screen):
         action = False
 
-        # get mouse position
         pos = pygame.mouse.get_pos()
 
-        # check mouseover and clicked conditions
         if self.rect.collidepoint(pos):
-            if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
+            pygame.mouse.set_cursor(*pygame.cursors.tri_left)
+            if pygame.mouse.get_pressed()[0] == 1 and self.clicked is False:
                 action = True
                 self.clicked = True
 
@@ -34,8 +36,17 @@ class Button():
             self.time_at_pressed = pygame.time.get_ticks()
         if self.time_at_pressed + 300 <= pygame.time.get_ticks():
             self.color = self.color_passive
-        # draw button
-        pygame.draw.rect(surface, self.color, self.rect)
-        surface.blit(self.img, (self.rect.x, self.rect.y))
+        if self.color_passive == "empty" and self.color == self.color_passive:
+            pygame.draw.rect(screen, (0, 0, 128), self.rect, 0, 3)
+            screen.blit(self.img, (self.rect.x + self.img.get_width() / 2, self.rect.y + self.img.get_height() / 2))
+        elif self.color_passive == "empty" and not self.color == self.color_passive:
+            pygame.draw.rect(screen, self.color, self.rect, 3, 3)
+            screen.blit(self.img, (self.rect.x + self.img.get_width() / 2, self.rect.y + self.img.get_height() / 2))
+        else:
+            pygame.draw.rect(screen, self.color, self.rect)
+            screen.blit(self.img, (self.rect.x, self.rect.y))
 
         return action
+
+    def is_finished(self):
+        return self.color == self.color_passive

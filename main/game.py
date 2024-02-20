@@ -13,6 +13,7 @@ import userinputfield
 import inputboxvalidator
 import usermanual
 import cherry_tile
+import music_button as music_button_class
 
 
 # Event handler
@@ -109,7 +110,7 @@ def change_scroll_direction():
 
 # Draw each tile based on position in the grid.
 def draw_world():
-    global coordinates_filled, score
+    global coordinates_filled, score, finished_level
     ground.empty()
     for y, row in enumerate(world_data):
         for x, tile in enumerate(row):
@@ -124,6 +125,7 @@ def draw_world():
                     t.draw()
                     # pygame.draw.rect(screen, "blue", (x * TILE_SIZE - scroll, y*TILE_SIZE, TILE_SIZE, TILE_SIZE), 3)
                     if P and t.colliderect(P):
+                        finished_level = True
                         P.set_finished()
                 elif tile == 21:
                     if (y, x) not in cherry_data:
@@ -150,9 +152,9 @@ def draw_world():
 
                 elif tile not in background_tiles:
                     t = tile_class.Tile(x * TILE_SIZE - scroll, y * TILE_SIZE, (W, H), tiles_list[tile], tile)
-                    ground.add(t)
+                    # ground.add(t)
                     t.draw()
-                    if P and t.colliderect(P) and ground.__contains__(t):
+                    if P and t.colliderect(P):  # and ground.__contains__(t):
                         P.is_colliding((t.x, t.y), (y, x))
                     elif P:
                         P.not_colliding((y, x))
@@ -186,8 +188,18 @@ def draw_debug_console():
 
 
 def load_level_data():
-    global scroll
-    global world_data
+    global scroll, world_data, coordinates_filled, world_coordinates, cherry_data
+
+    cherry_data = {}
+    coordinates_filled = False
+    world_data = []
+    world_coordinates = []
+
+    for i in range(ROWS):
+        row = [-1] * MAX_COLS
+        coord_row = [(0, 0)] * MAX_COLS
+        world_data.append(row)
+        world_coordinates.append(coord_row)
 
     scroll = 0
     world_data = []
@@ -215,30 +227,24 @@ def draw_grid():
             if offset_y >= rounded_p_x:
                 offset_y = offset_y - 2 * (offset_y - rounded_p_x) - TILE_SIZE
 
-            pygame.draw.line(screen, WHITE, (x, H),
+            pygame.draw.line(screen, WHITE, (x, rounded_p_y + (offset_y) - (rounded_p_x - 225) + TILE_SIZE),
                              (x, rounded_p_y - offset_y + (rounded_p_x - 225)))
     # draws rows
     for row in range(MAX_COLS + 1):
         y = row * TILE_SIZE
-        x = row * TILE_SIZE - scroll
-        max_row = 0
-        min_row = 0
         rounded_p_y = P.get_location()[1] - P.get_location()[1] % TILE_SIZE
         if P.get_location()[1] + TILE_SIZE * 5 >= y >= P.get_location()[1] - TILE_SIZE * 5:
             rounded_p_x = P.get_location()[0]
-            offset_x = (rounded_p_x - (rounded_p_x) % TILE_SIZE) - abs(
-                row * TILE_SIZE - rounded_p_y) + 5 * TILE_SIZE  # * (rounded_p_x / 225) # 225 = 1, 315
-            # print(row, offset_x)
-            # if offset_x >= rounded_p_x:  # 450 -> row 10
-            #     offset_x = offset_x - 2 * (offset_x + rounded_p_x)
+            offset_x = (rounded_p_x - rounded_p_x % TILE_SIZE) - abs(row * TILE_SIZE - rounded_p_y) + 5 * TILE_SIZE
+            if rounded_p_y < y:
+                offset_x += TILE_SIZE
             if not (rounded_p_x / TILE_SIZE).is_integer():
                 offset_x += TILE_SIZE / 2
             offset_x = offset_x - (offset_x % TILE_SIZE)
-            # print(row, offset_x)
-            if scroll % 2 == 0:
-                pygame.draw.line(screen, WHITE, (0, y), (offset_x, y))
-            else:
-                pygame.draw.line(screen, WHITE, (0, y), (offset_x + 22.5, y))
+            if scroll != int(scroll):
+                offset_x -= 22.5
+            start_x = rounded_p_x - (offset_x - rounded_p_x)
+            pygame.draw.line(screen, WHITE, (start_x, y), (offset_x, y))
 
 
 def scroll_world_free_movement():
@@ -285,6 +291,7 @@ MAX_COLS = 150
 TILE_SIZE = H // ROWS
 TILE_TYPES = 22
 level = 0
+finished_level = False
 score = 0
 background_tiles = [2, 15, 16, 17, 18, 19, 20]
 
@@ -314,11 +321,8 @@ world_data = []
 cherry_data = {}
 world_coordinates = []
 coordinates_filled = False
-for i in range(ROWS):
-    row = [-1] * MAX_COLS
-    coord_row = [(0, 0)] * MAX_COLS
-    world_data.append(row)
-    world_coordinates.append(coord_row)
+
+load_level_data()
 
 colors = ["crimson", "indigo", "navy", "violet", "slategrey", "lawngreen"]
 squares = pygame.sprite.Group()
@@ -351,6 +355,15 @@ for i in range(5):
     temp_img = sprite_sheet.get_image(i, 21, 21, 2, BLACK)
     cherry_animation_list.append(temp_img)
 
+arrow_animation_list = []
+
+sprite_sheet_image = pygame.image.load('assets/arrow_sheet.png').convert_alpha()
+sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
+temp_img = None
+for i in range(4):
+    temp_img = sprite_sheet.get_image(i, 32, 32, 4, WHITE)
+    arrow_animation_list.append(temp_img)
+
 animation_cooldown = 500
 animation_steps = [4, 6, 2, 2, 2, 4]
 action = 0
@@ -371,9 +384,9 @@ for x in range(len(animation_steps)):
 player_run_cycle = cycle(player_animation_list[1])
 player_anim = next(player_run_cycle)
 
-start_screen = startscreen.StartScreen(pygame.time.get_ticks(), player_run_cycle, start_text, start_rect, (HW, HH))
+start_screen = startscreen.StartScreen(pygame.time.get_ticks(), player_run_cycle, start_text, start_rect,
+                                       (W + SIDE_MARGIN, H), "", "Well done on finishing the level !")
 
-load_level_data()
 music_assets = cycle(['assets/audio/music/611440__kjartan_abel__after-the-flu.wav',
                       'assets/audio/music/647212__kjartan_abel__boschs-garden.wav',
                       'assets/audio/music/686838__zhr__desert-ambient-music.wav'])
@@ -392,16 +405,24 @@ input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W)
 user_manual = usermanual.UserManual(980, 0, "", "In this level, you have to reach the end!",
                                     "Try using 'fox.moveRight()' and 'fox.jump()' if you find yourself blocked by an obstacle!\n")
 
+off = pygame.image.load("assets/music_off.png").convert_alpha()
+on = pygame.image.load("assets/music_on.png").convert_alpha()
+music_button = music_button_class.MusicButton(150, 50, on, off, 2, "red", "blue")
+pygame.mixer.music.play()  # Uncomment for music
+pygame.mixer.music.set_volume(0.03)
+
+arrow = cherry_tile.Cherry(0, 0, arrow_animation_list,
+                           "arrow")
+
 while True:
-    # if not pygame.mixer.music.get_busy():
-    #     pygame.mixer.music.load(next(music_assets))
-    #     pygame.mixer.music.play()  # Uncomment for music
-    pygame.mixer.music.set_volume(0.5)
+    if not pygame.mixer.music.get_busy():
+        pygame.mixer.music.load(next(music_assets))
     draw_bg()
+    arrow.draw()
     # poll for events
     # pygame.QUIT event means the user clicked X to close your window
     events()
-    if not paused and P:
+    if not start_screen.get_paused() and P:
         if input_validator.isDone():
             draw_grid()
         else:
@@ -416,7 +437,9 @@ while True:
             P = None
 
         else:
-            draw_text(f"Score: {score}", font, "magenta", 0, 0)
+            draw_text(f"Score: {score}", font, (0, 0, 128), 0, 0)
+            draw_text("Music:", font, (0, 0, 128), 0, 60)
+            music_button.draw(screen)
             # scroll_world_free_movement()  # Uncomment to scroll with Q-D movement
 
             if scrolling:
@@ -441,15 +464,32 @@ while True:
                 P.reset_right_boundary()
             # print(pygame.mouse.get_pos())
 
-    elif not P:
-        start_screen.start_screen_on(pygame.time.get_ticks())
+    elif P is None and not finished_level:
+        # start_screen.start_screen_on(pygame.time.get_ticks())
+        # start_screen.set_paused()
         P = player.Player(3, 30, player_animation_list, (W, H), TILE_SIZE)
         scroll = 0
         scrolling = False
         goal_scroll = 0
         P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
         input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W)
-        paused = True
+
+    elif finished_level:
+        finished_level = False
+        if level == 5:
+            pygame.quit()
+            sys.exit()
+        P = player.Player(3, 30, player_animation_list, (W, H), TILE_SIZE)
+        level += 1
+        load_level_data()
+        scroll = 0
+        scrolling = False
+        goal_scroll = 0
+        P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
+        input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W)
+        start_screen.start_screen_on(pygame.time.get_ticks())
+        start_screen.set_paused()
+        start_screen.set_state("E")
 
     else:
         start_screen.start_screen_on(pygame.time.get_ticks())

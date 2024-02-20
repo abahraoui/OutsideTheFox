@@ -26,11 +26,11 @@ class UserInputField:
         self.titleFontSize = title_font_size
         run_button_surface = pygame.font.Font('assets/joystix monospace.otf', 24).render("Run", True, (255, 255, 255))
         self.runButton = button.Button(self.input_rect.x + (self.W - run_button_surface.get_width()) / 5,
-                                       self.editable_y_down, run_button_surface, 1)
+                                       self.editable_y_down, run_button_surface, 1, "lightgreen", "blue")
         clear_button_surface = pygame.font.Font('assets/joystix monospace.otf', 24).render("Clear", True,
                                                                                            (255, 255, 255))
         self.clearButton = button.Button(self.input_rect.x + (self.W + clear_button_surface.get_width()) / 3,
-                                         self.editable_y_down, clear_button_surface, 1)
+                                         self.editable_y_down, clear_button_surface, 1, "lightgreen", "blue")
         self.lineLimit = line_limit
         self.lineCount = 0
 

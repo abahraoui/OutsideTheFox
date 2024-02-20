@@ -176,16 +176,16 @@ for i in range(ROWS):
 # Init some GUI variables.
 font = pygame.font.Font('../assets/joystix monospace.otf', 32)
 save_text = font.render('Save', True, 'yellow', 'teal')
-save_button = button.Button(W // 2, H + LOWER_MARGIN - 50, save_text, 1)
+save_button = button.Button(W // 2, H + LOWER_MARGIN - 50, save_text, 1, 'yellow', 'teal')
 load_text = font.render('Load', True, 'yellow', 'teal')
-load_button = button.Button(W // 2 + 200, H + LOWER_MARGIN - 50, load_text, 1)
+load_button = button.Button(W // 2 + 200, H + LOWER_MARGIN - 50, load_text, 1, 'yellow', 'teal')
 
 # Makes all tiles into buttons.
 button_list = []
 button_col = 0
 button_row = 0
 for x in range(len(tiles_list)):
-    tile_button = button.Button(W + (75 * button_col) + 50, 75 * button_row + 50, tiles_list[x], 1)
+    tile_button = button.Button(W + (75 * button_col) + 50, 75 * button_row + 50, tiles_list[x], 1, "black", "black")
     button_list.append(tile_button)
     button_col += 1
     if button_col == 3:

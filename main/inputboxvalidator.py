@@ -1,6 +1,6 @@
 import ast
 
-
+import fox_class
 import pygame
 import user_execution_visitor
 
@@ -21,6 +21,7 @@ class InputBoxValidator:
         self.finished = True
         self.lastCooldown = 0
         self.lastQueueCooldown = 0
+        self.fox = fox_class.Fox(self)
 
     def set_text(self, text_to_validate):
         self.text_list = text_to_validate
@@ -49,7 +50,7 @@ class InputBoxValidator:
 
                 obj = compile(node, filename="<ast>", mode="exec")
                 # restricts the allowed variables to 'fox'.
-                allowed_vars = {"fox": self}
+                allowed_vars = {"fox": self.fox}
                 execute_code(obj, allowed_vars)
                 # thread = threading.Thread(target=execute_code, args=(obj, allowed_vars))
                 # thread.start()
