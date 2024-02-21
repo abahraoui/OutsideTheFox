@@ -1,10 +1,8 @@
 import pygame
-import button
-
 
 class MusicButton:
 
-    def __init__(self, x, y, img_active, img_passive, scale, color_active, color_passive):
+    def __init__(self, x, y, img_active, img_passive, scale, color_active, color_passive, music_assets):
         self.clicked = None
         self.x = x
         self.y = y
@@ -13,6 +11,7 @@ class MusicButton:
         self.img_passive = pygame.transform.scale(img_passive, (int(img_passive.get_width() * scale), int(img_passive.get_height() * scale)))
         self.img_passive.set_colorkey((255,255,255))
         self.scale = scale
+        self.music_tracks = music_assets
         self.color_active = color_active
         self.color_passive = color_passive
         self.active = True
@@ -20,6 +19,10 @@ class MusicButton:
         self.rect.topleft = (x,y)
 
     def draw(self, screen):
+        if not pygame.mixer.music.get_busy():
+            pygame.mixer.music.load(next(self.music_tracks))
+            pygame.mixer.music.play()
+
         pos = pygame.mouse.get_pos()
 
         if self.rect.collidepoint(pos):

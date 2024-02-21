@@ -14,6 +14,7 @@ import inputboxvalidator
 import usermanual
 import cherry_tile
 import music_button as music_button_class
+import button
 
 
 # Event handler
@@ -400,25 +401,25 @@ draw_world()
 player_start_pos = world_coordinates[14][5]
 P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
 
-user_input = userinputfield.UserInputField("Player Editor", 24, 56, H - 56, 5)
-input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W)
+user_input = userinputfield.UserInputField("Player Editor", 24, 56, H - 56, 10)
+input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W, user_input.get_feedback_rect())
 user_manual = usermanual.UserManual(980, 0, "", "In this level, you have to reach the end!",
                                     "Try using 'fox.moveRight()' and 'fox.jump()' if you find yourself blocked by an obstacle!\n")
 
 off = pygame.image.load("assets/music_off.png").convert_alpha()
 on = pygame.image.load("assets/music_on.png").convert_alpha()
-music_button = music_button_class.MusicButton(150, 50, on, off, 2, "red", "blue")
+music_button = music_button_class.MusicButton(150, 50, on, off, 2, "red", "blue", music_assets)
 pygame.mixer.music.play()  # Uncomment for music
 pygame.mixer.music.set_volume(0.03)
 
 arrow = cherry_tile.Cherry(0, 0, arrow_animation_list,
                            "arrow")
+restart_text = font.render('Restart', True, "white")
+restart_button = button.Button(0, 125, restart_text, 1, "lightgreen", (0,0, 128))
 
 while True:
-    if not pygame.mixer.music.get_busy():
-        pygame.mixer.music.load(next(music_assets))
     draw_bg()
-    arrow.draw()
+    # arrow.draw()
     # poll for events
     # pygame.QUIT event means the user clicked X to close your window
     events()
@@ -433,6 +434,11 @@ while True:
         if user_input.draw():
             input_validator.set_text(user_input.get_text_saved())
             input_validator.validate()
+        if input_validator.get_feedback():
+            input_validator.draw_feedback()
+        if input_validator.has_error() and not user_input.get_error_processed():
+            user_input.set_error_line(input_validator.get_error_line())
+
         if P.do():
             P = None
 
@@ -451,7 +457,7 @@ while True:
             if len(input_validator.get_queue()) > 0 and not P.get_lerping():
                 answer = input_validator.process_queue(scroll)
                 if answer:
-                    draw_world()
+                    # draw_world()
                     goal_scroll += answer[0] * TILE_SIZE / 2
                     scrolling = answer[1]
 
@@ -463,7 +469,10 @@ while True:
                 # P.setLocation(P.get_location()[0] - 850, P.get_location()[1])
                 P.reset_right_boundary()
             # print(pygame.mouse.get_pos())
-
+            if restart_button.draw(screen):
+                P = None
+                load_level_data()
+                score = 0
     elif P is None and not finished_level:
         # start_screen.start_screen_on(pygame.time.get_ticks())
         # start_screen.set_paused()
@@ -472,7 +481,7 @@ while True:
         scrolling = False
         goal_scroll = 0
         P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
-        input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W)
+        input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W, user_input.get_feedback_rect())
 
     elif finished_level:
         finished_level = False
@@ -481,12 +490,14 @@ while True:
             sys.exit()
         P = player.Player(3, 30, player_animation_list, (W, H), TILE_SIZE)
         level += 1
+        user_input.increment_line_limit()
         load_level_data()
+        score = 0
         scroll = 0
         scrolling = False
         goal_scroll = 0
         P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
-        input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W)
+        input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W, user_input.get_feedback_rect())
         start_screen.start_screen_on(pygame.time.get_ticks())
         start_screen.set_paused()
         start_screen.set_state("E")

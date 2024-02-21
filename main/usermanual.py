@@ -53,8 +53,8 @@ class UserManual:
         self.text = self.user_manual_text
         self.state = 'M'
         self.active_W = 400
-        self.inactive_rect = pygame.Rect(self.x + 215, self.y + 15, 70, self.y + 70)
-        self.active_rect = pygame.Rect(self.x - 150, 25, self.active_W, self.y + 600)
+        self.inactive_rect = pygame.Rect(self.x + 115, self.y + 15, 70, self.y + 70)
+        self.active_rect = pygame.Rect(self.x - 250, 25, self.active_W, self.y + 600)
         self.rect = self.inactive_rect
         self.text_font = pygame.font.Font('assets/joystix monospace.otf', 16)
         print(self.active_rect.y)
@@ -112,11 +112,11 @@ class UserManual:
 
         if not self.active:
             self.rect = self.inactive_rect
-            pygame.draw.circle(screen, "gold", (self.x + 250, self.y + 50), 35)
+            pygame.draw.circle(screen, "gold", (self.x + 150, self.y + 50), 35)
             text_surface = pygame.font.Font('assets/joystix monospace.otf', 32).render("?", True, (255, 255, 255))
-            screen.blit(text_surface, (self.x + 236, self.y + 30))
+            screen.blit(text_surface, (self.x + 136, self.y + 30))
             text_surface = pygame.font.Font('assets/joystix monospace.otf', 24).render("Help", True, (0, 0, 128))
-            screen.blit(text_surface, (self.x + 216, self.y + 85))
+            screen.blit(text_surface, (self.x + 116, self.y + 85))
         else:
             if self.manualTabButton.draw(screen):
                 self.change_state('M')
@@ -127,7 +127,7 @@ class UserManual:
 
             text_surface = pygame.font.Font('assets/joystix monospace.otf', 32).render("X", True, "red")
             pygame.draw.rect(screen, "blue", self.active_rect, 0, 3)
-            screen.blit(text_surface, (self.x + 218, self.y + 30))
+            screen.blit(text_surface, (self.x + 118, self.y + 30))
             start_y = self.y + 80
 
             text_surfaces = [x for x in self.text_surface if x[1] == self.page]

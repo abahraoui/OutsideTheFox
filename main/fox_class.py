@@ -21,3 +21,12 @@ class Fox:
 
     def climbDown(self):
         self.higher_entity.climbDown()
+
+    def canClimb(self):
+        return self.higher_entity.canClimb()
+
+    def canMove(self, direction):
+        return self.higher_entity.canMove(direction)
+
+    def canJump(self):
+        return self.higher_entity.canJump()

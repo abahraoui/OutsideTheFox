@@ -43,7 +43,7 @@ class Button():
             pygame.draw.rect(screen, self.color, self.rect, 3, 3)
             screen.blit(self.img, (self.rect.x + self.img.get_width() / 2, self.rect.y + self.img.get_height() / 2))
         else:
-            pygame.draw.rect(screen, self.color, self.rect)
+            pygame.draw.rect(screen, self.color, self.rect, 0, 3)
             screen.blit(self.img, (self.rect.x, self.rect.y))
 
         return action

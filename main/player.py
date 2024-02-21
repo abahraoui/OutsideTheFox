@@ -73,7 +73,6 @@ class Player(pygame.sprite.Sprite):
 
     def climbSound(self):
         if self.climbingSoundChannel is None or (not self.climbingSoundChannel.get_busy() and pygame.time.get_ticks() > self.climbingSoundCooldown + 500):
-            print("inside")
             self.climbingSoundCooldown = pygame.time.get_ticks()
             climbing_sound = pygame.mixer.Sound("assets/audio/sounds/478054__deleted_user_10023915__ladderclimb2.wav")
             climbing_sound.set_volume(0.5)
