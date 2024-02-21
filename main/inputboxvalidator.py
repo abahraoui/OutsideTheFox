@@ -1,5 +1,6 @@
 import ast
 import sys
+import usermanual
 
 import fox_class
 import pygame
@@ -12,24 +13,32 @@ def execute_code(obj, allowed):
 
 class InputBoxValidator:
 
-    def __init__(self, player, tile_size, W, feedback_rect):
+    def __init__(self, player, tile_size, W, error_rect):
+
         self.text_list = []
         self.player = player
         self.queue = []
         self.tileSize = tile_size
         self.W = W
         self.visitor = user_execution_visitor.UserExecutionVisitor()
-        self.user_feedback_rect = feedback_rect
+        self.user_error_feedback_rect = error_rect
         self.finished = True
         self.lastCooldown = 0
         self.lastQueueCooldown = 0
         self.fox = fox_class.Fox(self)
-        self.feedback = []
+        self.error_feedback = []
         self.errorLine = None
+        self.screen = pygame.display.get_surface()
+        self.feedback_font = pygame.font.Font('assets/joystix monospace.otf', 16)
+        self.fox_feedback = []
+        self.fox_feedback_surfaces = []
+        self.fox_feedback_rect = None
+        self.show_feedback = False
+        self.show_feedback_timer = pygame.time.get_ticks()
 
     def set_text(self, text_to_validate):
         self.text_list = text_to_validate
-        self.feedback = []
+        self.error_feedback = []
         self.errorLine = None
 
     def validate(self):
@@ -70,9 +79,9 @@ class InputBoxValidator:
                 else:
                     line_number = exc_value.end_lineno
 
-                self.feedback.append(f"Error occurred at line {line_number}")
+                self.error_feedback.append(f"Error occurred at line {line_number}")
                 self.errorLine = line_number
-                self.feedback.append(str(exc_value))
+                self.error_feedback.append(str(exc_value))
             if self.errorLine is not None:
                 self.queue = []
 
@@ -81,29 +90,68 @@ class InputBoxValidator:
 
     def get_error_line(self):
         return self.errorLine
-    def get_feedback(self):
-        return self.feedback
 
-    def draw_feedback(self):
-        for i in range(len(self.feedback)):
-            text_surface = pygame.font.Font('assets/joystix monospace.otf', 16).render(self.feedback[i], True,
-                                                                                       (255, 255, 255))
-            if text_surface.get_width() >= self.user_feedback_rect.width - 10:
-                text = self.feedback[i]
-                quotient, remainder = divmod(len(text), 2)
-                first = text[:quotient + remainder]
-                text_surface = pygame.font.Font('assets/joystix monospace.otf', 16).render(first, True,
-                                                                                           (255, 255, 255))
-                pygame.display.get_surface().blit(text_surface,
-                                                  (self.user_feedback_rect.x, self.user_feedback_rect.y + 25 * i))
-                second = text[quotient + remainder:]
-                text_surface = pygame.font.Font('assets/joystix monospace.otf', 16).render(second, True,
-                                                                                           (255, 255, 255))
-                pygame.display.get_surface().blit(text_surface,
-                                                  (self.user_feedback_rect.x, self.user_feedback_rect.y + 50 * i))
-            else:
-                pygame.display.get_surface().blit(text_surface,
-                                              (self.user_feedback_rect.x, self.user_feedback_rect.y + 25 * i))
+    def get_error_feedback(self):
+        return self.error_feedback
+
+    def draw_error_feedback(self):
+        start_y = self.user_error_feedback_rect.top
+        text_surface = pygame.font.Font('assets/joystix monospace.otf', 16).render(self.error_feedback[0], True,
+                                                                                   (255, 255, 255))
+        self.screen.blit(text_surface, (self.user_error_feedback_rect.left + 30, start_y))
+        text_surfaces = []
+        limit = self.user_error_feedback_rect.bottom - 10
+        usermanual.parse_text(self.error_feedback[1], text_surfaces, self.feedback_font, limit,
+                              self.user_error_feedback_rect.width)
+
+        for i in range(len(text_surfaces)):
+            current_surface = text_surfaces[i]
+            self.screen.blit(current_surface[0], (self.user_error_feedback_rect.left + 30, start_y + 25 * (i + 1)))
+
+    def process_fox_feedback(self):
+        x, y = self.player.get_location()
+        self.fox_feedback_surfaces = []
+        self.fox_feedback_rect = pygame.Rect(x - 100, y - 300, 500, 200)
+        current_text = self.fox_feedback[0]
+        text = self.fox_feedback[0]
+        match current_text:
+            case "canClimb()":
+                text = str(self.canClimb()) + (", I can climb." if self.canClimb() else ", I cannot climb.")
+            case "canMoveRight()":
+                text = str(self.canMoveRight()) + (", I can move right." if self.canMoveRight() else ", I cannot move right.")
+            case "canMoveLeft()":
+                text = str(self.canMoveLeft()) + (", I can move left." if self.canMoveLeft() else ", I cannot move left.")
+            case "canJump()":
+                text = str(self.canJump()) + (", I can jump." if self.canJump() else ", I cannot jump.")
+            case _:
+                text = current_text
+
+        limit = self.fox_feedback_rect.height - 50
+        usermanual.parse_text(text, self.fox_feedback_surfaces, self.feedback_font, limit,
+                              self.fox_feedback_rect.width)
+        self.fox_feedback.pop(0)
+        self.show_feedback = True
+        self.show_feedback_timer = pygame.time.get_ticks()
+
+    def draw_fox_feedback(self):
+        navy = (0, 0, 128)
+        page = 1
+        start_y = self.fox_feedback_rect.top + 5
+        x, y = self.player.get_location()
+        pygame.draw.polygon(self.screen, navy,
+                            [(x + 35, y - 40), (x + 100, y - 100), (x + 400, y - 100), (x + 400, y - 300),
+                             (x - 100, y - 300), (x - 100, y - 100), (x + 35, y - 100)])
+        self.fox_feedback_rect = pygame.Rect(x - 100, y - 300, 500, 200)
+
+        pygame.draw.rect(self.screen, 'green', self.fox_feedback_rect, 3, 3)
+        pygame.draw.line(self.screen, 'green', (x + 35, y - 40), (x + 100, y - 100), 3)
+        pygame.draw.line(self.screen, 'green', (x + 35, y - 40), (x + 35, y - 100), 3)
+        text_surfaces = [x for x in self.fox_feedback_surfaces if x[1] == page]
+        for i in range(len(text_surfaces)):
+            current_surface = text_surfaces[i]
+            self.screen.blit(current_surface[0], (self.fox_feedback_rect.topleft[0] + 5, start_y + 25 * i))
+        if pygame.time.get_ticks() > self.show_feedback_timer + 1500:
+            self.show_feedback = False
 
     def process_queue(self, scroll):
         if pygame.time.get_ticks() > self.lastQueueCooldown + 750:
@@ -120,7 +168,8 @@ class InputBoxValidator:
                         self.lastQueueCooldown = pygame.time.get_ticks()
                         return goal_scroll, scrolling
                     elif self.player.get_blocked_right() and self.player.finishedCrouching and not self.player.get_lerping():
-                        # TODO feedback point player blocked right
+                        self.set_fox_feedback("Ouch I cannot move right, I am blocked!")
+                        self.process_fox_feedback()
                         self.queue.pop(0)
                         self.lastQueueCooldown = pygame.time.get_ticks()
                         return 0, False
@@ -133,7 +182,8 @@ class InputBoxValidator:
                         self.lastQueueCooldown = pygame.time.get_ticks()
                         return goal_scroll, scrolling
                     elif self.player.get_blocked_left() or scroll == 0 and self.player.finishedCrouching and not self.player.get_lerping():
-                        # TODO feedback point player blocked left (maybe hurt visually)
+                        self.set_fox_feedback("Unfortunately I cannot move left, I am blocked!")
+                        self.process_fox_feedback()
                         self.queue.pop(0)
                         self.lastQueueCooldown = pygame.time.get_ticks()
                         return 0, False
@@ -144,8 +194,9 @@ class InputBoxValidator:
                         scrolling = False
                         self.lastQueueCooldown = pygame.time.get_ticks()
                         return 0, scrolling
-                    # TODO feedback point player blocked above
                     elif self.player.get_blocked_above() and self.player.finishedCrouching and not self.player.get_lerping():
+                        self.set_fox_feedback("Oops I cannot jump above, I am blocked!")
+                        self.process_fox_feedback()
                         self.queue.pop(0)
                         self.lastQueueCooldown = pygame.time.get_ticks()
                         return 0, False
@@ -158,34 +209,36 @@ class InputBoxValidator:
                         self.lastQueueCooldown = pygame.time.get_ticks()
                         return 0, scrolling
                 case 4:
-                    if not self.player.get_lerping() and not self.player.jumping and not self.player.falling:
+                    if not self.player.get_lerping() and not self.player.jumping and not self.player.falling and self.player.canClimb:
                         self.player.climbUp()
                         self.queue.pop(0)
                         scrolling = False
                         self.lastQueueCooldown = pygame.time.get_ticks()
                         return 0, scrolling
-                    # TODO feedback point player cant climb
                     elif not self.player.canClimb:
+                        self.set_fox_feedback("Sadly I cannot climb up, there is no ladder!")
+                        self.process_fox_feedback()
                         self.queue.pop(0)
                         self.lastQueueCooldown = pygame.time.get_ticks()
                         return 0, False
                 case 5:
-                    print(self.player.get_lerping(), self.player.jumping, self.player.falling,
-                          self.player.get_blocked_below(), self.player.canClimb)
                     if not self.player.get_lerping() and not self.player.jumping and not self.player.get_blocked_below() and self.player.canClimb:
                         self.player.climbDown()
                         self.queue.pop(0)
                         scrolling = False
                         self.lastQueueCooldown = pygame.time.get_ticks()
                         return 0, scrolling
-                    # TODO feedback point player cant climb or cant climb
                     elif self.player.get_blocked_below() or not self.player.canClimb:  # and pygame.time.get_ticks() >
                         # self.lastQueueCooldown + 500:
-                        print(self.player.ladders)
-                        print(
-                            self.player.get_blocked_below() or not self.player.canClimb and pygame.time.get_ticks() > self.lastQueueCooldown + 500)
+                        self.set_fox_feedback("Darn I cannot climb down, there is no ladder!")
+                        self.process_fox_feedback()
                         self.queue.pop(0)
                         self.lastQueueCooldown = pygame.time.get_ticks()
+                        return 0, False
+                case 6:
+                    if not self.show_feedback:
+                        self.process_fox_feedback()
+                        self.queue.pop(0)
                         return 0, False
                 case _:
                     print("Not an action.")
@@ -201,6 +254,9 @@ class InputBoxValidator:
             return True
         else:
             return False
+
+    def set_fox_feedback(self, text):
+        self.fox_feedback.insert(0, text)
 
     def moveRight(self):
         self.queue.append(0)
@@ -223,11 +279,15 @@ class InputBoxValidator:
     def canClimb(self):
         return self.player.canClimb
 
-    def canMove(self, direction):
-        if direction == "R":
-            return not self.player.get_blocked_right()
-        elif direction == "L":
-            return not self.player.get_blocked_left()
+    def canMoveRight(self):
+        return not self.player.get_blocked_right()
+
+    def canMoveLeft(self):
+        return not self.player.get_blocked_left()
 
     def canJump(self):
         return not self.player.get_blocked_above()
+
+    def say(self, text):
+        self.queue.append(6)
+        self.set_fox_feedback(text)

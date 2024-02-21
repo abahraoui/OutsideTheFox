@@ -25,8 +25,13 @@ class Fox:
     def canClimb(self):
         return self.higher_entity.canClimb()
 
-    def canMove(self, direction):
-        return self.higher_entity.canMove(direction)
+    def canMoveRight(self):
+        return self.higher_entity.canMoveRight()
 
+    def canMoveLeft(self):
+        return self.higher_entity.canMoveLeft()
     def canJump(self):
         return self.higher_entity.canJump()
+
+    def say(self, text):
+        self.higher_entity.say(text)

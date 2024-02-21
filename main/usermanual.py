@@ -16,6 +16,8 @@ def check_limit_y(limit, text_surface):
 
 
 def parse_text(text_to_parse, surface_to_append, font, limit, active_W):
+    global current_page_height
+    current_page_height = 0
     page = 1
     text_list = []
     test_text = ""

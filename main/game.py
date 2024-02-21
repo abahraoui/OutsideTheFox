@@ -291,7 +291,7 @@ ROWS = 16
 MAX_COLS = 150
 TILE_SIZE = H // ROWS
 TILE_TYPES = 22
-level = 0
+level = 1
 finished_level = False
 score = 0
 background_tiles = [2, 15, 16, 17, 18, 19, 20]
@@ -401,7 +401,7 @@ draw_world()
 player_start_pos = world_coordinates[14][5]
 P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
 
-user_input = userinputfield.UserInputField("Player Editor", 24, 56, H - 56, 10)
+user_input = userinputfield.UserInputField("Player Editor", 24, 56, H - 56, 9)
 input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W, user_input.get_feedback_rect())
 user_manual = usermanual.UserManual(980, 0, "", "In this level, you have to reach the end!",
                                     "Try using 'fox.moveRight()' and 'fox.jump()' if you find yourself blocked by an obstacle!\n")
@@ -434,8 +434,8 @@ while True:
         if user_input.draw():
             input_validator.set_text(user_input.get_text_saved())
             input_validator.validate()
-        if input_validator.get_feedback():
-            input_validator.draw_feedback()
+        if input_validator.get_error_feedback():
+            input_validator.draw_error_feedback()
         if input_validator.has_error() and not user_input.get_error_processed():
             user_input.set_error_line(input_validator.get_error_line())
 
@@ -443,6 +443,9 @@ while True:
             P = None
 
         else:
+            if input_validator.show_feedback:
+                input_validator.draw_fox_feedback()
+            # input_validator.draw_fox_feedback()
             draw_text(f"Score: {score}", font, (0, 0, 128), 0, 0)
             draw_text("Music:", font, (0, 0, 128), 0, 60)
             music_button.draw(screen)

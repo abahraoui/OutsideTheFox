@@ -43,7 +43,7 @@ class UserInputField:
         else:
             self.color = self.color_passive
         if self.mouseOver and not self.active:
-            self.color = "red"
+            self.color = "lightgreen"
         else:
             if self.active:
                 self.color = self.color_active
@@ -59,7 +59,6 @@ class UserInputField:
         title_surface = pygame.font.Font('assets/joystix monospace.otf', self.titleFontSize).render(self.title
                                                                                                     , True,
                                                                                                     (255, 255, 255))
-
         numbering_font = pygame.font.Font('assets/joystix monospace.otf', 16)
         screen.blit(title_surface, (self.input_rect.x + (self.W - title_surface.get_width()) / 2, self.input_rect.y))
         pygame.draw.rect(screen, 'white', (1180, 36, self.W,
@@ -76,7 +75,7 @@ class UserInputField:
                 if i == len(self.user_text) - 1:
                     if self.newline:
                         self.newline = False
-                        #TODO change inferior to superior and check behavior
+                        # TODO change inferior to superior and check behavior
                         while text_surface.get_width() <= self.W - 24:
                             test_text += " "
                             self.user_text += " "
@@ -104,6 +103,11 @@ class UserInputField:
         self.text_saved = text_list.copy()  # Saves the text to a class field.
         self.lineCount = len(text_surfaces)
         for i in range(len(text_surfaces)):
+            # if len(text_list[i]) > 0 and text_list[i][0] == " ":
+            #     j = 0
+            #     while text_list[i][j] == " ":
+            #         text_list[i][j].replace(" ", "_", 1)
+            #         j += 1
             if self.errorLine is not None and i + 1 == self.errorLine:
                 numbering_surface = numbering_font.render(f"{i + 1}", True, 'crimson')
                 current_surface = self.font.render(text_list[i], True, 'crimson')
@@ -133,7 +137,7 @@ class UserInputField:
                          self.input_rect.y + self.editable_y_top * (index_of_last + 1)))
 
         lines_surface = numbering_font.render(f"Lines left: {self.lineLimit - self.lineCount}", True, 'darkblue')
-        pygame.draw.rect(screen, "red", self.feedback_rect, 3)
+        # pygame.draw.rect(screen, "red", self.feedback_rect, 3) # Uncomment to Debug feedback rect
         if self.active:
             screen.blit(lines_surface, (self.input_rect.x + (self.W - lines_surface.get_width()) / 2,
                                         self.editable_y_down + 32))
