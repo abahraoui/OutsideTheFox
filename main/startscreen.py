@@ -1,3 +1,4 @@
+import math
 import sys
 
 import pygame.display
@@ -16,6 +17,8 @@ def make_button(text, W, H, offset):
                          H / 2 - button_surface.get_height() + offset, button_surface, 1,
                          "lightgreen", "empty", rect)
 
+def roundup(x):
+     return int(math.ceil(x / 100.0)) * 100
 
 class StartScreen:
 
@@ -25,8 +28,20 @@ class StartScreen:
         self.lastUpdate = lastUpdate
         self.playerRunCycle = playerRunCycle
         self.playerAnim = next(self.playerRunCycle)
+        self.player_anim_offset = 110
         self.text_surface = text_surface
         self.textRect = textRect
+        self.title = "Outside The"
+        self.title_font = pygame.font.Font('assets/joystix monospace.otf', 56)
+        self.title_surface = self.title_font.render(self.title, True, "navy")
+        self.title_surface.set_alpha(210)
+        self.sub_title = "A programming game!"
+        self.sub_title_font = pygame.font.Font('assets/joystix monospace.otf', 32)
+        self.sub_title_surface = self.sub_title_font.render(self.sub_title, True, "navy")
+        self.sub_title_surface = pygame.transform.rotate(self.sub_title_surface, 270)
+        self.flip_anim = False
+        self.flip_anim_timer = pygame.time.get_ticks() - 1000
+
         self.screen = pygame.display.get_surface()
         self.menu_rect = pygame.Rect(300, self.H / 2 - self.text_surface.get_height() / 2 - 148, self.W - 600,
                                      self.H - 200)
@@ -54,17 +69,42 @@ class StartScreen:
         self.can_back = False
         self.can_continue = False
         self.page = 1
+        self.anim_angle = 0
 
+    def animation(self, current_time):
+        if current_time > self.lastUpdate + 100:
+            self.playerAnim = next(self.playerRunCycle)
+            self.lastUpdate = current_time
+            if self.lastUpdate > self.flip_anim_timer + 3000:
+                self.flip_anim = True
+            if self.flip_anim:
+                self.anim_angle += 10
+                if self.anim_angle % 360 < 180:
+                    self.player_anim_offset -= 2.5
+                else:
+                    self.player_anim_offset += 2.5
+                if self.anim_angle % 360 == 0:
+                    self.flip_anim = False
+                    self.title_surface.set_alpha(self.title_surface.get_alpha() + 10)
+                    self.flip_anim_timer = pygame.time.get_ticks()
+
+            self.playerAnim = pygame.transform.rotate(self.playerAnim, self.anim_angle)
+            self.playerAnim = pygame.transform.flip(self.playerAnim, True, False)
+            self.playerAnim.set_colorkey("black")
+        if pygame.time.get_ticks() % 100 == 0:
+            self.sub_title_surface = pygame.transform.flip(self.sub_title_surface, True, True)
     def start_screen_on(self, current_time):
         if self.state == 'M':
-            if current_time > self.lastUpdate + 100:
-                self.playerAnim = next(self.playerRunCycle)
-                self.lastUpdate = current_time
+            self.animation(current_time)
+            # opposite_title_surface = pygame.transform.flip(self.title_surface, True, False)
+            opposite_sub_title_surface = pygame.transform.flip(self.sub_title_surface, True, True)
             self.screen.blit(self.playerAnim, (
                 self.W / 2 - self.playerAnim.get_width() / 2,
-                self.H / 2 - self.playerAnim.get_height() / 2 - 400 + 110))
-            # self.screen.blit(self.text_surface, (
-            #     self.W / 2 - self.text_surface.get_width() / 2, self.H / 2 - self.text_surface.get_height() / 2 - 300))
+                self.H / 2 - self.playerAnim.get_height() / 2 - 400 + self.player_anim_offset))
+            # self.screen.blit(opposite_title_surface, (self.W / 2 + opposite_title_surface.get_width() - 470, self.H / 2 - self.title_surface.get_height() - 270))
+            self.screen.blit(self.title_surface, (self.W / 2 - self.title_surface.get_width() - 45, self.H / 2 - self.title_surface.get_height() - 270))
+            self.screen.blit(opposite_sub_title_surface, (self.W / 2 - opposite_sub_title_surface.get_width() / 2 - 180, self.H / 2 - self.sub_title_surface.get_height() + 270))
+            self.screen.blit(self.sub_title_surface, (self.W / 2 - self.sub_title_surface.get_width() / 2 + 180, self.H / 2 - self.sub_title_surface.get_height() + 270))
 
             # pygame.draw.rect(self.screen, (0, 0, 128), self.menu_rect)
             if self.play_button.draw(self.screen):

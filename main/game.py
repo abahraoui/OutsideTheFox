@@ -16,7 +16,6 @@ import cherry_tile
 import music_button as music_button_class
 import button
 
-
 # Event handler
 def events():
     global paused, scroll, goal_scroll, scrolling
@@ -47,7 +46,7 @@ def events():
             #
             # if event.type == KEYDOWN and event.key == K_g:
             #     P.jump()
-            if input_validator.isDone():
+            if input_validator.isDone() and not start_screen.get_paused():
 
                 if user_manual.mouse_colliding(pygame.mouse.get_pos()):
                     # if not user_manual.get_active():
@@ -74,14 +73,16 @@ def events():
                 if event.type == pygame.KEYDOWN and user_input.get_active():
                     # Check for backspace
                     if event.key == pygame.K_BACKSPACE:
-
-                        # get text input from 0 to -1 i.e. end.
                         user_input.remove_text()
+                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_v and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                        # Check if Ctrl+C is pressed
+                        clipboard_content = pygame.scrap.get(pygame.SCRAP_TEXT).decode()
+                        clipboard_content = clipboard_content[:-1]
+                        print("Clipboard content:", clipboard_content)
+                        user_input.paste_clipboard(clipboard_content)
 
                     elif event.key == 13:  # Code for ENTER Key.
                         user_input.set_newline()
-                        # Unicode standard is used for string
-                    # formation
                     else:
                         user_input.add_text(event.unicode)
 
@@ -271,6 +272,7 @@ LOWER_MARGIN, SIDE_MARGIN = 100, 300
 # pygame setup
 pygame.init()
 screen = pygame.display.set_mode((W + SIDE_MARGIN, H + LOWER_MARGIN))
+pygame.scrap.init()
 # screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
 clock = pygame.time.Clock()
 pygame.display.set_caption("Outside The Fox")
@@ -291,7 +293,7 @@ ROWS = 16
 MAX_COLS = 150
 TILE_SIZE = H // ROWS
 TILE_TYPES = 22
-level = 1
+level = 0
 finished_level = False
 score = 0
 background_tiles = [2, 15, 16, 17, 18, 19, 20]
@@ -430,7 +432,6 @@ while True:
             user_input.set_mouse_over(False)
             user_input.set_active(False)
         draw_world()
-        user_manual.draw()
         if user_input.draw():
             input_validator.set_text(user_input.get_text_saved())
             input_validator.validate()
@@ -443,6 +444,7 @@ while True:
             P = None
 
         else:
+            user_manual.draw()
             if input_validator.show_feedback:
                 input_validator.draw_fox_feedback()
             # input_validator.draw_fox_feedback()

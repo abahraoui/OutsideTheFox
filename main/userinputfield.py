@@ -226,5 +226,8 @@ class UserInputField:
         self.errorLine = None
         return self.text_saved
 
+    def paste_clipboard(self, content):
+        self.user_text += content
+
     def mouse_colliding(self, pos):
         return self.input_rect.collidepoint(pos)
