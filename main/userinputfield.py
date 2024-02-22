@@ -33,41 +33,13 @@ class UserInputField:
                                          self.editable_y_down, clear_button_surface, 1, "lightgreen", "blue")
         self.lineLimit = line_limit
         self.lineCount = 0
+        self.oldLineCount = self.lineCount
         self.feedback_rect = pygame.Rect(self.input_rect.x, editable_y_down - 100, self.W, 100)
         self.errorLine = None
         self.errorProcessed = False
 
-    def draw(self):
-        if self.active:
-            self.color = self.color_active
-        else:
-            self.color = self.color_passive
-        if self.mouseOver and not self.active:
-            self.color = "lightgreen"
-        else:
-            if self.active:
-                self.color = self.color_active
-            else:
-                self.color = self.color_passive
-
-        if not self.user_text:
-            self.user_text = ' '
-        screen = pygame.display.get_surface()
-        pygame.draw.rect(screen, self.color, self.input_rect)
-        pygame.draw.rect(screen, self.color_passive, (1180, 0, self.W, 36))
-
-        title_surface = pygame.font.Font('assets/joystix monospace.otf', self.titleFontSize).render(self.title
-                                                                                                    , True,
-                                                                                                    (255, 255, 255))
-        numbering_font = pygame.font.Font('assets/joystix monospace.otf', 16)
-        screen.blit(title_surface, (self.input_rect.x + (self.W - title_surface.get_width()) / 2, self.input_rect.y))
-        pygame.draw.rect(screen, 'white', (1180, 36, self.W,
-                                           16))  # ,(self.input_rect.x, self.input_rect.y + self.editable_y), (self.input_rect.x + self.W, self.input_rect.y + self.editable_y))
-        text_surfaces = []
+    def process_text(self, text_surfaces, text_list, color):
         test_text = ""
-        text_list = []
-        white = (255, 255, 255)
-        color = white
         for i in range(len(self.user_text)):
             if len(text_surfaces) < self.lineLimit:
                 test_text += self.user_text[i]
@@ -97,17 +69,61 @@ class UserInputField:
                     if len(text_surfaces) == self.lineLimit:
                         self.lastLineFilled = True
 
+        # removes unintended space.
         for i in range(0, len(text_list)):
             if text_list[i][0] == " ":
                 text_list[i] = text_list[i][1:]
+
         self.text_saved = text_list.copy()  # Saves the text to a class field.
+        old = self.lineCount
         self.lineCount = len(text_surfaces)
+        if self.lineCount > old:
+            self.oldLineCount = self.lineCount
+
+    def draw(self):
+        if self.active:
+            self.color = self.color_active
+        else:
+            self.color = self.color_passive
+        if self.mouseOver and not self.active:
+            self.color = "lightgreen"
+        else:
+            if self.active:
+                self.color = self.color_active
+            else:
+                self.color = self.color_passive
+
+        if not self.user_text:
+            self.user_text = ' '
+        screen = pygame.display.get_surface()
+        pygame.draw.rect(screen, self.color, self.input_rect)
+        pygame.draw.rect(screen, self.color_passive, (1180, 0, self.W, 36))
+
+        title_surface = pygame.font.Font('assets/joystix monospace.otf', self.titleFontSize).render(self.title
+                                                                                                    , True,
+                                                                                                    (255, 255, 255))
+        numbering_font = pygame.font.Font('assets/joystix monospace.otf', 16)
+        screen.blit(title_surface, (self.input_rect.x + (self.W - title_surface.get_width()) / 2, self.input_rect.y))
+        pygame.draw.rect(screen, 'white', (1180, 36, self.W,
+                                           16))  # ,(self.input_rect.x, self.input_rect.y + self.editable_y), (self.input_rect.x + self.W, self.input_rect.y + self.editable_y))
+        text_surfaces = []
+        text_list = []
+        white = (255, 255, 255)
+        color = white
+        self.process_text(text_surfaces, text_list, color)
+        indent_list = []
         for i in range(len(text_surfaces)):
-            # if len(text_list[i]) > 0 and text_list[i][0] == " ":
-            #     j = 0
-            #     while text_list[i][j] == " ":
-            #         text_list[i][j].replace(" ", "_", 1)
-            #         j += 1
+            test_text = ""
+            if i < len(text_list) and len(text_list[i]) > 0 and text_list[i][0] == " ":
+                j = 0
+                # print("s",text_list[i][j], "e")
+                while j < len(text_list[i]) and text_list[i][j] == " ":
+                    test_text += '_'
+                    # print(test_text)
+                    j += 1
+                unique = list(set(text_list[i]))
+                if unique == [" "] and i != len(text_list) - 1:
+                    test_text = ""
             if self.errorLine is not None and i + 1 == self.errorLine:
                 numbering_surface = numbering_font.render(f"{i + 1}", True, 'crimson')
                 current_surface = self.font.render(text_list[i], True, 'crimson')
@@ -115,9 +131,12 @@ class UserInputField:
             else:
                 numbering_surface = numbering_font.render(f"{i + 1}", True, 'grey')
                 current_surface = text_surfaces[i]
+            indentation_surface = self.font.render(test_text, True, 'grey')
+            screen.blit(indentation_surface, (self.input_rect.x + 12, self.input_rect.y + self.editable_y_top * (i + 1)))
             screen.blit(numbering_surface, (self.input_rect.x, self.input_rect.y + self.editable_y_top * (i + 1) + 8))
-            screen.blit(current_surface, (self.input_rect.x + 12, self.input_rect.y + self.editable_y_top * (i + 1)))
-
+            indent_offset = indentation_surface.get_width() / 2 - 12 if indentation_surface.get_width() > 0 else 0
+            indent_list.append(indent_offset)
+            screen.blit(current_surface, (self.input_rect.x + 15 + indent_offset, self.input_rect.y + self.editable_y_top * (i + 1)))
         if self.active:
             active_char_surface = self.font.render(self.active_char, True, (255, 255, 255))
             cooldown = 500
@@ -131,9 +150,10 @@ class UserInputField:
                 active_char_surface = self.font.render(self.active_char, True, (255, 255, 255))
             last_text_surface = text_surfaces[len(text_surfaces) - 1] if len(text_surfaces) > 0 else 0
             index_of_last = text_surfaces.index(last_text_surface) if last_text_surface != 0 else 0
+            indent_offset = indent_list[index_of_last]
             text_offset = text_surfaces[len(text_surfaces) - 1].get_width() if len(text_surfaces) > 0 else 0
             screen.blit(active_char_surface,
-                        (self.input_rect.x + text_offset + 12,
+                        (self.input_rect.x + text_offset + 12 + indent_offset,
                          self.input_rect.y + self.editable_y_top * (index_of_last + 1)))
 
         lines_surface = numbering_font.render(f"Lines left: {self.lineLimit - self.lineCount}", True, 'darkblue')
@@ -177,7 +197,16 @@ class UserInputField:
         self.user_text = self.user_text[:-1]
         if self.lastLineFilled:
             self.lastLineFilled = False
-        if len(self.user_text) > 0 and self.user_text[len(self.user_text) - 1] == " ":
+        text_surfaces = []
+        text_list = []
+        self.process_text(text_surfaces, text_list, "white")
+        removed_line = False
+        if self.oldLineCount != self.lineCount:
+            self.oldLineCount = self.lineCount
+            self.user_text = self.user_text[:-1]
+            removed_line = True
+
+        if len(self.user_text) > 0 and self.user_text[-1] == " " and removed_line:
             while len(self.user_text) > 0 and self.user_text[len(self.user_text) - 1] == " ":
                 self.user_text = self.user_text[:-1]
 
