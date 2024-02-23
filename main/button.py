@@ -17,6 +17,7 @@ class Button():
         self.color_passive = color_passive  # "blue"
         self.color = self.color_passive
         self.time_at_pressed = pygame.time.get_ticks()
+        self.colliding = False
 
     def draw(self, screen):
         action = False
@@ -25,9 +26,14 @@ class Button():
 
         if self.rect.collidepoint(pos):
             pygame.mouse.set_cursor(*pygame.cursors.tri_left)
+            self.colliding = True
             if pygame.mouse.get_pressed()[0] == 1 and self.clicked is False:
                 action = True
                 self.clicked = True
+        if not self.rect.collidepoint(pos) and self.colliding:
+            self.colliding = False
+            pygame.mouse.set_cursor(*pygame.cursors.arrow)
+
 
         if pygame.mouse.get_pressed()[0] == 0:
             self.clicked = False

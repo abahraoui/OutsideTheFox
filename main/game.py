@@ -75,16 +75,25 @@ def events():
                     if event.key == pygame.K_BACKSPACE:
                         user_input.remove_text()
                     elif event.type == pygame.KEYDOWN and event.key == pygame.K_v and pygame.key.get_mods() & pygame.KMOD_CTRL:
-                        # Check if Ctrl+C is pressed
+                        # Check if Ctrl+V is pressed
                         clipboard_content = pygame.scrap.get(pygame.SCRAP_TEXT).decode()
-                        clipboard_content = clipboard_content[:-1]
-                        print("Clipboard content:", clipboard_content)
+                        if clipboard_content[-1] == '\x00':
+                            clipboard_content = clipboard_content[:-1]
+                        if clipboard_content[-1] == " ":
+                            clipboard_content = clipboard_content[:-1]
                         user_input.paste_clipboard(clipboard_content)
-
-                    elif event.key == 13:  # Code for ENTER Key.
-                        user_input.set_newline()
+                        user_input.start_feedback("Pasted")
+                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_c and pygame.key.get_mods() & pygame.KMOD_CTRL:
+                        pygame.scrap.put(pygame.SCRAP_TEXT, user_input.get_copy_text())
+                        user_input.start_feedback("Copied")
                     else:
                         user_input.add_text(event.unicode)
+                elif event.type == pygame.MOUSEBUTTONDOWN and not user_input.is_copy_rect() and user_input.get_active():
+                        user_input.set_copy_rect_start_pos(pygame.mouse.get_pos())
+                elif event.type == pygame.MOUSEMOTION and user_input.is_copy_rect() and user_input:
+                    user_input.set_copy_rect_end_pos(pygame.mouse.get_pos())
+                else:
+                    user_input.void_copy_rect_pos()
 
 
 # Draws and makes the background scrollable.
@@ -417,7 +426,7 @@ pygame.mixer.music.set_volume(0.03)
 arrow = cherry_tile.Cherry(0, 0, arrow_animation_list,
                            "arrow")
 restart_text = font.render('Restart', True, "white")
-restart_button = button.Button(0, 125, restart_text, 1, "lightgreen", (0,0, 128))
+restart_button = button.Button(0, 125, restart_text, 1, "lightgreen", (0, 0, 128))
 
 while True:
     draw_bg()
