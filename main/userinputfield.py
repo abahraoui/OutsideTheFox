@@ -49,8 +49,9 @@ class UserInputField:
         for i in range(len(self.user_text)):
             if len(text_surfaces) < self.lineLimit:
                 char = self.user_text[i]
-                if char != '\r':
+                if char != '\r' and char != '\n':
                     test_text += char
+
                 text_surface = self.font.render(test_text, True, color)
                 if i == len(self.user_text) - 1:
                     if char == '\r' and self.newline is False and self.lineCount < self.lineLimit:
@@ -198,8 +199,7 @@ class UserInputField:
             screen.blit(lines_surface, (self.input_rect.x + (self.W - lines_surface.get_width()) / 2,
                                         self.editable_y_down + 32))
             if self.clearButton.draw(screen):
-                self.user_text = ""
-                self.lastLineFilled = False
+                self.clear_text()
             if self.runButton.draw(screen):
                 return True
             else:
@@ -208,11 +208,20 @@ class UserInputField:
     def set_active(self, value):
         self.active = value
 
+    def set_user_text(self, value):
+        self.user_text = value
+    def clear_text(self):
+        self.user_text = ""
+        self.lastLineFilled = False
+
     def set_mouse_over(self, value):
         self.mouseOver = value
 
     def set_error_line(self, value):
         self.errorLine = value
+
+    def set_error_processed(self):
+        self.errorProcessed = True
 
     def increment_line_limit(self):
         self.lineLimit += 1

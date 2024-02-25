@@ -38,11 +38,12 @@ class MusicButton:
         if pygame.mouse.get_pressed()[0] == 0:
             self.clicked = False
 
+        # pygame.draw.rect(screen, "navy", self.rect, 0, 3)
         if self.active:
-            # pygame.draw.rect(screen, "red", self.rect, 3)
             screen.blit(self.img_active, (self.x, self.y))
         elif not self.active:
             # pygame.draw.rect(screen, "red", self.rect, 3)
             screen.blit(self.img_passive, (self.x, self.y))
+
 
 

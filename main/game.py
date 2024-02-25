@@ -21,6 +21,7 @@ def events():
     global paused, scroll, goal_scroll, scrolling
     for event in pygame.event.get():
         if event.type == pygame.QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+            save_level_data(user_input.get_text_saved())
             pygame.quit()
             sys.exit()
         # Start game handler
@@ -77,19 +78,22 @@ def events():
                     elif event.type == pygame.KEYDOWN and event.key == pygame.K_v and pygame.key.get_mods() & pygame.KMOD_CTRL:
                         # Check if Ctrl+V is pressed
                         clipboard_content = pygame.scrap.get(pygame.SCRAP_TEXT).decode()
-                        if clipboard_content[-1] == '\x00':
-                            clipboard_content = clipboard_content[:-1]
-                        if clipboard_content[-1] == " ":
-                            clipboard_content = clipboard_content[:-1]
-                        user_input.paste_clipboard(clipboard_content)
-                        user_input.start_feedback("Pasted")
+                        if len(clipboard_content) > 1:
+                            if clipboard_content[-1] == '\x00':
+                                clipboard_content = clipboard_content[:-1]
+                            if clipboard_content[-1] == " ":
+                                clipboard_content = clipboard_content[:-1]
+                            user_input.paste_clipboard(clipboard_content)
+                            user_input.start_feedback("Pasted")
                     elif event.type == pygame.KEYDOWN and event.key == pygame.K_c and pygame.key.get_mods() & pygame.KMOD_CTRL:
-                        pygame.scrap.put(pygame.SCRAP_TEXT, user_input.get_copy_text())
-                        user_input.start_feedback("Copied")
+                        text = user_input.get_copy_text()
+                        if len(text) > 0:
+                            pygame.scrap.put(pygame.SCRAP_TEXT, text)
+                            user_input.start_feedback("Copied")
                     else:
                         user_input.add_text(event.unicode)
                 elif event.type == pygame.MOUSEBUTTONDOWN and not user_input.is_copy_rect() and user_input.get_active():
-                        user_input.set_copy_rect_start_pos(pygame.mouse.get_pos())
+                    user_input.set_copy_rect_start_pos(pygame.mouse.get_pos())
                 elif event.type == pygame.MOUSEMOTION and user_input.is_copy_rect() and user_input:
                     user_input.set_copy_rect_end_pos(pygame.mouse.get_pos())
                 else:
@@ -216,6 +220,21 @@ def load_level_data():
     world_data = []
     pickle_in = open(f'./main/level_data/level{level}_data', 'rb')
     world_data = pickle.load(pickle_in)
+    with open(f'main/level_data/level_code/level{level}_text.txt', 'r') as file:
+        lines = file.readlines()
+        final_text = ""
+        for line in lines:
+            text = line.__str__()
+            final_text += text + " "
+        final_text = final_text[:-2]
+        user_input.set_user_text(final_text)
+
+
+def save_level_data(text):
+    file = open(f'main/level_data/level_code/level{level}_text.txt', 'w')
+    for t in text:
+        file.write(t + " ")
+    file.close()
 
 
 # Draws the grid.
@@ -302,7 +321,8 @@ ROWS = 16
 MAX_COLS = 150
 TILE_SIZE = H // ROWS
 TILE_TYPES = 22
-level = 0
+level = 1
+max_level = 5
 finished_level = False
 score = 0
 background_tiles = [2, 15, 16, 17, 18, 19, 20]
@@ -333,6 +353,8 @@ world_data = []
 cherry_data = {}
 world_coordinates = []
 coordinates_filled = False
+
+user_input = userinputfield.UserInputField("Player Editor", 24, 56, H - 56, 9)
 
 load_level_data()
 
@@ -398,6 +420,8 @@ player_anim = next(player_run_cycle)
 
 start_screen = startscreen.StartScreen(pygame.time.get_ticks(), player_run_cycle, start_text, start_rect,
                                        (W + SIDE_MARGIN, H), "", "Well done on finishing the level !")
+start_screen.set_max_level_unlocked(max_level)
+start_screen.set_level_wanted(level)
 
 music_assets = cycle(['assets/audio/music/611440__kjartan_abel__after-the-flu.wav',
                       'assets/audio/music/647212__kjartan_abel__boschs-garden.wav',
@@ -412,35 +436,53 @@ draw_world()
 player_start_pos = world_coordinates[14][5]
 P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
 
-user_input = userinputfield.UserInputField("Player Editor", 24, 56, H - 56, 9)
 input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W, user_input.get_feedback_rect())
 user_manual = usermanual.UserManual(980, 0, "", "In this level, you have to reach the end!",
                                     "Try using 'fox.moveRight()' and 'fox.jump()' if you find yourself blocked by an obstacle!\n")
 
 off = pygame.image.load("assets/music_off.png").convert_alpha()
 on = pygame.image.load("assets/music_on.png").convert_alpha()
-music_button = music_button_class.MusicButton(150, 50, on, off, 2, "red", "blue", music_assets)
+on.set_colorkey("black")
+
+music_button = music_button_class.MusicButton(105, 170, on, off, 2, "red", "blue", music_assets)
 pygame.mixer.music.play()  # Uncomment for music
 pygame.mixer.music.set_volume(0.03)
+
+level_icon = pygame.image.load("assets/level_icon.png").convert_alpha()
+level_button = button.Button(5, 180, level_icon, 1.5, "lightgreen", (0, 0, 128))
+
+pause_icon = pygame.image.load("assets/pause_icon.png").convert_alpha()
+pause_button = button.Button(60, 180, pause_icon, 1.5, "lightgreen", (0, 0, 128))
 
 arrow = cherry_tile.Cherry(0, 0, arrow_animation_list,
                            "arrow")
 restart_text = font.render('Restart', True, "white")
-restart_button = button.Button(0, 125, restart_text, 1, "lightgreen", (0, 0, 128))
+restart_button = button.Button(5, 125, restart_text, 1, "lightgreen", (0, 0, 128))
 
 while True:
     draw_bg()
     # arrow.draw()
-    # poll for events
-    # pygame.QUIT event means the user clicked X to close your window
     events()
     if not start_screen.get_paused() and P:
+        if start_screen.get_level_wanted() != level:
+            save_level_data(user_input.get_text_saved())
+            level = start_screen.get_level_wanted()
+            load_level_data()
+            score = 0
+            user_input.set_error_processed()
+            P = player.Player(3, 30, player_animation_list, (W, H), TILE_SIZE)
+            scroll = 0
+            scrolling = False
+            goal_scroll = 0
+            P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
+            input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W, user_input.get_feedback_rect())
+
+        draw_world()
         if input_validator.isDone():
             draw_grid()
         else:
             user_input.set_mouse_over(False)
             user_input.set_active(False)
-        draw_world()
         if user_input.draw():
             input_validator.set_text(user_input.get_text_saved())
             input_validator.validate()
@@ -457,9 +499,22 @@ while True:
             if input_validator.show_feedback:
                 input_validator.draw_fox_feedback()
             # input_validator.draw_fox_feedback()
-            draw_text(f"Score: {score}", font, (0, 0, 128), 0, 0)
-            draw_text("Music:", font, (0, 0, 128), 0, 60)
+            draw_text(f"Level: {level}", font, (0, 0, 128), 5, 0)
+            draw_text(f"Score: {score}", font, (0, 0, 128), 5, 60)
+            # draw_text("Music:", font, (0, 0, 128), 5, 125)
             music_button.draw(screen)
+            if level_button.draw(screen):
+                start_screen.start_screen_on(pygame.time.get_ticks())
+                start_screen.set_level_wanted(level)
+                start_screen.set_max_level_unlocked(max_level)
+                start_screen.set_paused()
+                start_screen.set_state("L")
+
+            if pause_button.draw(screen):
+                start_screen.start_screen_on(pygame.time.get_ticks())
+                start_screen.set_paused()
+                start_screen.set_state("M")
+
             # scroll_world_free_movement()  # Uncomment to scroll with Q-D movement
 
             if scrolling:
@@ -499,12 +554,15 @@ while True:
 
     elif finished_level:
         finished_level = False
-        if level == 5:
+        if level > 5:
             pygame.quit()
             sys.exit()
         P = player.Player(3, 30, player_animation_list, (W, H), TILE_SIZE)
-        level += 1
+        save_level_data(user_input.get_text_saved())
+        user_input.clear_text()
         user_input.increment_line_limit()
+        level += 1
+        start_screen.set_level_wanted(level)
         load_level_data()
         score = 0
         scroll = 0
