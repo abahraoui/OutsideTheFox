@@ -43,6 +43,7 @@ class UserInputField:
         self.drawing_feedback = False
         self.drawing_feedback_timer = pygame.time.get_ticks()
         self.feedback_text = ""
+        self.char_offset = 0
 
     def process_text(self, text_surfaces, text_list, color):
         test_text = ""
@@ -88,10 +89,12 @@ class UserInputField:
         self.lineCount = len(text_surfaces)
         if self.lineCount > old:
             self.oldLineCount = self.lineCount
+
     def start_feedback(self, text):
         self.drawing_feedback = True
         self.drawing_feedback_timer = pygame.time.get_ticks()
         self.feedback_text = text
+
     def draw_feedback(self, screen):
         text_surface = pygame.font.Font('assets/joystix monospace.otf', 24).render(self.feedback_text, True, "white")
         screen.blit(text_surface, (self.feedback_rect.left + text_surface.get_width(), self.feedback_rect.top))
@@ -176,8 +179,13 @@ class UserInputField:
             index_of_last = text_surfaces.index(last_text_surface) if last_text_surface != 0 else 0
             indent_offset = indent_list[index_of_last]
             text_offset = text_surfaces[len(text_surfaces) - 1].get_width() if len(text_surfaces) > 0 else 0
+            offset = 0
+            if self.char_offset > 0:
+                offset_string = text_list[-1][-self.char_offset:]
+                offset = self.font.render(offset_string, True, (255, 255, 255)).get_width()
+
             screen.blit(active_char_surface,
-                        (self.input_rect.x + text_offset + 12 + indent_offset,
+                        (self.input_rect.x + text_offset + 12 + indent_offset - offset,
                          self.input_rect.y + self.editable_y_top * (index_of_last + 1)))
             if self.is_copy_rect():
                 if self.copy_rect.height > 5 and self.copy_rect.width > 5:
@@ -210,6 +218,7 @@ class UserInputField:
 
     def set_user_text(self, value):
         self.user_text = value
+
     def clear_text(self):
         self.user_text = ""
         self.lastLineFilled = False
@@ -258,6 +267,12 @@ class UserInputField:
 
         # print(self.copy_rect.left)
 
+    def increment_offset(self):
+        self.char_offset += 1
+
+    def decrement_offset(self):
+        if self.char_offset > 0:
+            self.char_offset -= 1
     def void_copy_rect_pos(self):
         # print("void")
         self.copy_rect = pygame.Rect(0, 0, 0, 0)
@@ -284,7 +299,12 @@ class UserInputField:
         if self.errorLine is not None:
             self.errorProcessed = True
             self.errorLine = None
-        self.user_text = self.user_text[:-1]
+        if self.char_offset == 0:
+            self.user_text = self.user_text[:-1]
+        else:
+            index = len(self.user_text) - 1 - self.char_offset
+            self.user_text = self.user_text[:index] + self.user_text[index + 1:]
+
         if self.lastLineFilled:
             self.lastLineFilled = False
         text_surfaces = []
@@ -306,9 +326,18 @@ class UserInputField:
         if self.errorLine is not None:
             self.errorProcessed = True
             self.errorLine = None
-        if self.lineCount <= self.lineLimit and not self.lastLineFilled:
-            self.user_text += text
-
+        text_surfaces = []
+        text_list = []
+        self.process_text(text_surfaces, text_list, "white")
+        if self.lineCount <= self.lineLimit and not self.lastLineFilled and len(text_surfaces) <= self.lineLimit:
+            if self.char_offset == 0:
+                self.user_text += text
+            else:
+                index = len(self.user_text) - 1 - self.char_offset
+                if index - 1 < 0:
+                    self.user_text = text + self.user_text[index + 1:]
+                else:
+                    self.user_text = self.user_text[:index] + text + self.user_text[index + 1:]
 
     def get_text_saved(self):
         self.errorProcessed = False

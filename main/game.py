@@ -90,6 +90,10 @@ def events():
                         if len(text) > 0:
                             pygame.scrap.put(pygame.SCRAP_TEXT, text)
                             user_input.start_feedback("Copied")
+                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT:
+                        user_input.increment_offset()
+                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT:
+                        user_input.decrement_offset()
                     else:
                         user_input.add_text(event.unicode)
                 elif event.type == pygame.MOUSEBUTTONDOWN and not user_input.is_copy_rect() and user_input.get_active():
@@ -135,8 +139,9 @@ def draw_world():
                 if (x, y) == (149, 15):
                     coordinates_filled = True
             if tile >= 0:
+                t = tile_class.Tile(x * TILE_SIZE - scroll, y * TILE_SIZE, (W, H), tiles_list[tile], tile)
+
                 if tile == 14:
-                    t = tile_class.Tile(x * TILE_SIZE - scroll, y * TILE_SIZE, (W, H), tiles_list[tile], tile)
                     t.draw()
                     # pygame.draw.rect(screen, "blue", (x * TILE_SIZE - scroll, y*TILE_SIZE, TILE_SIZE, TILE_SIZE), 3)
                     if P and t.colliderect(P):
@@ -158,7 +163,6 @@ def draw_world():
                             cherry_data[(y, x)] = "Removed"
                             score += 100
                 elif tile == 9:
-                    t = tile_class.Tile(x * TILE_SIZE - scroll, y * TILE_SIZE, (W, H), tiles_list[tile], tile)
                     t.draw()
                     if P and t.colliderect(P):
                         P.add_ladder((y, x))
@@ -166,7 +170,6 @@ def draw_world():
                         P.remove_ladder((y, x))
 
                 elif tile not in background_tiles:
-                    t = tile_class.Tile(x * TILE_SIZE - scroll, y * TILE_SIZE, (W, H), tiles_list[tile], tile)
                     # ground.add(t)
                     t.draw()
                     if P and t.colliderect(P):  # and ground.__contains__(t):
@@ -202,9 +205,8 @@ def draw_debug_console():
         draw_text(f"Scroll:{scroll}", font, 'indigo', 700, H + 15)
 
 
-def load_level_data():
-    global scroll, world_data, coordinates_filled, world_coordinates, cherry_data
-
+def load_level_data(menu=False):
+    global scroll, world_data, coordinates_filled, world_coordinates, cherry_data, level
     cherry_data = {}
     coordinates_filled = False
     world_data = []
@@ -215,19 +217,22 @@ def load_level_data():
         coord_row = [(0, 0)] * MAX_COLS
         world_data.append(row)
         world_coordinates.append(coord_row)
-
+    loaded_level = level
     scroll = 0
     world_data = []
-    pickle_in = open(f'./main/level_data/level{level}_data', 'rb')
+    if menu:
+        loaded_level = 10
+    else:
+        with open(f'main/level_data/level_code/level{level}_text.txt', 'r') as file:
+            lines = file.readlines()
+            final_text = ""
+            for line in lines:
+                text = line.__str__()
+                final_text += text + " "
+            final_text = final_text[:-2]
+            user_input.set_user_text(final_text)
+    pickle_in = open(f'./main/level_data/level{loaded_level}_data', 'rb')
     world_data = pickle.load(pickle_in)
-    with open(f'main/level_data/level_code/level{level}_text.txt', 'r') as file:
-        lines = file.readlines()
-        final_text = ""
-        for line in lines:
-            text = line.__str__()
-            final_text += text + " "
-        final_text = final_text[:-2]
-        user_input.set_user_text(final_text)
 
 
 def save_level_data(text):
@@ -356,7 +361,7 @@ coordinates_filled = False
 
 user_input = userinputfield.UserInputField("Player Editor", 24, 56, H - 56, 9)
 
-load_level_data()
+load_level_data(True)
 
 colors = ["crimson", "indigo", "navy", "violet", "slategrey", "lawngreen"]
 squares = pygame.sprite.Group()
@@ -415,6 +420,8 @@ for x in range(len(animation_steps)):
         temp_img_list.append(sprite_sheet.get_image(i, 32, 32, 3, BLACK))
     player_animation_list.append(temp_img_list)
 
+pygame.display.set_icon(player_animation_list[1][0])
+
 player_run_cycle = cycle(player_animation_list[1])
 player_anim = next(player_run_cycle)
 
@@ -459,11 +466,15 @@ arrow = cherry_tile.Cherry(0, 0, arrow_animation_list,
 restart_text = font.render('Restart', True, "white")
 restart_button = button.Button(5, 125, restart_text, 1, "lightgreen", (0, 0, 128))
 
+loaded_game_level = False
 while True:
     draw_bg()
     # arrow.draw()
     events()
     if not start_screen.get_paused() and P:
+        if not loaded_game_level:
+            load_level_data()
+            loaded_game_level = True
         if start_screen.get_level_wanted() != level:
             save_level_data(user_input.get_text_saved())
             level = start_screen.get_level_wanted()
@@ -504,16 +515,19 @@ while True:
             # draw_text("Music:", font, (0, 0, 128), 5, 125)
             music_button.draw(screen)
             if level_button.draw(screen):
+                start_screen.set_state("L")
                 start_screen.start_screen_on(pygame.time.get_ticks())
                 start_screen.set_level_wanted(level)
                 start_screen.set_max_level_unlocked(max_level)
                 start_screen.set_paused()
-                start_screen.set_state("L")
 
             if pause_button.draw(screen):
+                start_screen.set_state("M")
                 start_screen.start_screen_on(pygame.time.get_ticks())
                 start_screen.set_paused()
-                start_screen.set_state("M")
+                loaded_game_level = False
+                load_level_data(True)
+
 
             # scroll_world_free_movement()  # Uncomment to scroll with Q-D movement
 
@@ -570,11 +584,12 @@ while True:
         goal_scroll = 0
         P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
         input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W, user_input.get_feedback_rect())
+        start_screen.set_state("E")
         start_screen.start_screen_on(pygame.time.get_ticks())
         start_screen.set_paused()
-        start_screen.set_state("E")
 
     else:
+        draw_world()
         start_screen.start_screen_on(pygame.time.get_ticks())
     draw_debug_console()
 

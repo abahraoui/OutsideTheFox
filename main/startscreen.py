@@ -108,6 +108,8 @@ class StartScreen:
 
     def start_screen_on(self, current_time):
         if self.state == 'M':
+            if self.started:
+                self.started = False
             self.animation(current_time)
             # opposite_title_surface = pygame.transform.flip(self.title_surface, True, False)
             opposite_sub_title_surface = pygame.transform.flip(self.sub_title_surface, True, True)
@@ -127,7 +129,8 @@ class StartScreen:
                 self.can_play = True
             if self.can_play and self.play_button.is_finished():
                 self.can_play = False
-                self.started = True
+                if not self.started:
+                    self.started = True
                 self.paused = False
 
             if self.help_button.draw(self.screen):
@@ -270,6 +273,9 @@ class StartScreen:
 
     def set_state(self, state):
         self.state = state
+
+    def get_started(self):
+        return self.started
 
     def set_max_level_unlocked(self, value):
         self.level_page = 1

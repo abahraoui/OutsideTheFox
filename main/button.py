@@ -28,14 +28,14 @@ class Button():
         pos = pygame.mouse.get_pos()
 
         if self.rect.collidepoint(pos):
-            pygame.mouse.set_cursor(*pygame.cursors.tri_left)
+            # pygame.mouse.set_cursor(*pygame.cursors.tri_left)
             self.colliding = True
             if pygame.mouse.get_pressed()[0] == 1 and self.clicked is False:
                 action = True
                 self.clicked = True
         if not self.rect.collidepoint(pos) and self.colliding:
             self.colliding = False
-            pygame.mouse.set_cursor(*pygame.cursors.arrow)
+            # pygame.mouse.set_cursor(*pygame.cursors.arrow)
 
         if pygame.mouse.get_pressed()[0] == 0:
             self.clicked = False
