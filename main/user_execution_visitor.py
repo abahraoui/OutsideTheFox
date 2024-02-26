@@ -15,9 +15,10 @@ passing = ast.Pass(
 class UserExecutionVisitor(ast.NodeTransformer):
     def visit(self, node):
 
-        # Sanitizes function calls not allowed.
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.value.id != "fox":
-            return passing
+        # Sanitizes function calls not allowed. #TODO choose whether keep this, allowed vars already sanitise some stuff. PROBLEM: blocks array.append() for example.
+        # if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.value.id != "fox":
+        #     print(node.func.value.id)
+        #     return passing
 
         # Sanitizes builtins functions exec and eval that can execute code.
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and (node.func.id == "exec" or node.func.id == "eval"):

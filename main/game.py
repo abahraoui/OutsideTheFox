@@ -15,6 +15,9 @@ import usermanual
 import cherry_tile
 import music_button as music_button_class
 import button
+import bridge as bridge_class
+from collections import OrderedDict
+
 
 # Event handler
 def events():
@@ -129,7 +132,7 @@ def change_scroll_direction():
 
 # Draw each tile based on position in the grid.
 def draw_world():
-    global coordinates_filled, score, finished_level
+    global coordinates_filled, score, finished_level, current_bridge_problem, current_sign
     ground.empty()
     for y, row in enumerate(world_data):
         for x, tile in enumerate(row):
@@ -162,6 +165,65 @@ def draw_world():
                             jump_sound.set_volume(1)
                             cherry_data[(y, x)] = "Removed"
                             score += 100
+                elif tile == 22:
+                    if (y, x) not in sign_list:
+                        sign_list[(y, x)] = t
+                    elif (y, x) in sign_list:
+                        sign_list[(y, x)] = t
+                        b_list = list(bridge_list.items())
+                        s_list = list(sign_list.items())
+                        if problem_index < len(b_list) and b_list[problem_index][1][0] is not None:
+                            current_bridge_problem = b_list[problem_index][0]
+                            current_sign = s_list[problem_index][0]
+                            if bridge_list and not b_list[problem_index][1][0].completed and sign_list[current_sign] == t:
+                                pos = pygame.mouse.get_pos()
+                                t.draw()
+                                if t.get_rect().collidepoint(pos) and pygame.mouse.get_pressed()[0] == 1:
+                                    match b_list[problem_index][1][0].id:
+                                        case 8:
+                                            input_validator.set_mode("Bridge")
+                                        case 23:
+                                            input_validator.set_mode("Ladder")
+                                        case 24:
+                                            input_validator.set_mode("Spike")
+
+                                    user_input.set_mode("Problem")
+                elif tile == 8:
+                    if "8" not in bridge_list:
+                        bridge_list["8"] = None, {}
+                    if (y, x) not in bridge_list["8"][1]:
+                        bridge_list["8"][1][(y, x)] = tile
+                    elif (y, x) in bridge_list["8"][1]:
+                        bridge_list["8"][1][(y, x)] = tile
+                        if len(bridge_list["8"][1]) > 0 and bridge_list["8"][0] is None:
+                            bridge = bridge_class.Bridge(W, H, bridge_list["8"][1], False, TILE_SIZE, 8)
+                            bridge_list["8"] = bridge, bridge_list["8"][1]
+                        if "8" in bridge_list and len(bridge_list["8"][1]) > 0:
+                            bridge_list["8"][0].draw(P, scroll, TILE_SIZE, tiles_list)
+                elif tile == 23:
+                    if "23" not in bridge_list:
+                        bridge_list["23"] = None, {}
+                    if (y, x) not in bridge_list["23"][1]:
+                        bridge_list["23"][1][(y, x)] = tile
+                    elif (y, x) in bridge_list["23"][1]:
+                        bridge_list["23"][1][(y, x)] = tile
+                        if len(bridge_list["23"][1]) > 0 and bridge_list["23"][0] is None:
+                            bridge = bridge_class.Bridge(W, H, bridge_list["23"][1], False, TILE_SIZE, 23)
+                            bridge_list["23"] = bridge, bridge_list["23"][1]
+                        if "23" in bridge_list and len(bridge_list["23"][1]) > 0:
+                            bridge_list["23"][0].draw(P, scroll, TILE_SIZE, tiles_list)
+                elif tile == 24:
+                    if "24" not in bridge_list:
+                        bridge_list["24"] = None, {}
+                    if (y, x) not in bridge_list["24"][1]:
+                        bridge_list["24"][1][(y, x)] = tile
+                    elif (y, x) in bridge_list["24"][1]:
+                        bridge_list["24"][1][(y, x)] = tile
+                        if len(bridge_list["24"][1]) > 0 and bridge_list["24"][0] is None:
+                            bridge = bridge_class.Bridge(W, H, bridge_list["24"][1], False, TILE_SIZE, 24)
+                            bridge_list["24"] = bridge, bridge_list["24"][1]
+                        if "24" in bridge_list and len(bridge_list["24"][1]) > 0:
+                            bridge_list["24"][0].draw(P, scroll, TILE_SIZE, tiles_list)
                 elif tile == 9:
                     t.draw()
                     if P and t.colliderect(P):
@@ -170,9 +232,8 @@ def draw_world():
                         P.remove_ladder((y, x))
 
                 elif tile not in background_tiles:
-                    # ground.add(t)
                     t.draw()
-                    if P and t.colliderect(P):  # and ground.__contains__(t):
+                    if P and t.colliderect(P):
                         P.is_colliding((t.x, t.y), (y, x))
                     elif P:
                         P.not_colliding((y, x))
@@ -219,7 +280,6 @@ def load_level_data(menu=False):
         world_coordinates.append(coord_row)
     loaded_level = level
     scroll = 0
-    world_data = []
     if menu:
         loaded_level = 10
     else:
@@ -325,12 +385,17 @@ reset_scroll = False
 ROWS = 16
 MAX_COLS = 150
 TILE_SIZE = H // ROWS
-TILE_TYPES = 22
+TILE_TYPES = 25
 level = 1
 max_level = 5
 finished_level = False
 score = 0
-background_tiles = [2, 15, 16, 17, 18, 19, 20]
+background_tiles = [2, 15, 16, 17, 18, 19, 20, 22]
+bridge_list = OrderedDict()
+sign_list = OrderedDict()
+current_bridge_problem = 0
+current_sign = 0
+problem_index = 0
 
 # Loads the tiles for the level editor.
 tiles_list = []
@@ -466,6 +531,8 @@ arrow = cherry_tile.Cherry(0, 0, arrow_animation_list,
 restart_text = font.render('Restart', True, "white")
 restart_button = button.Button(5, 125, restart_text, 1, "lightgreen", (0, 0, 128))
 
+bridge = None
+
 loaded_game_level = False
 while True:
     draw_bg()
@@ -478,6 +545,11 @@ while True:
         if start_screen.get_level_wanted() != level:
             save_level_data(user_input.get_text_saved())
             level = start_screen.get_level_wanted()
+            bridge_list = OrderedDict()
+            sign_list = OrderedDict()
+            current_bridge_problem = 0
+            current_sign = 0
+            problem_index = 0
             load_level_data()
             score = 0
             user_input.set_error_processed()
@@ -487,9 +559,17 @@ while True:
             goal_scroll = 0
             P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
             input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W, user_input.get_feedback_rect())
-
         draw_world()
         if input_validator.isDone():
+            if input_validator.get_mode() == "Ladder" and input_validator.get_problem_try() is not None:
+                bridge_list[current_bridge_problem][0].set_ladder_problem(input_validator.get_problem_try())
+            if input_validator.get_problem_completed():
+                bridge_list[current_bridge_problem][0].validate_problem()
+                problem_index += 1
+                input_validator.set_mode("Player")
+                user_input.set_mode("Player")
+
+                input_validator.set_problem_completed(False)
             draw_grid()
         else:
             user_input.set_mouse_over(False)
@@ -527,8 +607,6 @@ while True:
                 start_screen.set_paused()
                 loaded_game_level = False
                 load_level_data(True)
-
-
             # scroll_world_free_movement()  # Uncomment to scroll with Q-D movement
 
             if scrolling:
@@ -577,6 +655,11 @@ while True:
         user_input.increment_line_limit()
         level += 1
         start_screen.set_level_wanted(level)
+        bridge_list = OrderedDict()
+        sign_list = OrderedDict()
+        current_bridge_problem = 0
+        current_sign = 0
+        problem_index = 0
         load_level_data()
         score = 0
         scroll = 0

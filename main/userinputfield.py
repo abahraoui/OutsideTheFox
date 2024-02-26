@@ -44,6 +44,7 @@ class UserInputField:
         self.drawing_feedback_timer = pygame.time.get_ticks()
         self.feedback_text = ""
         self.char_offset = 0
+        self.mode = "Player"
 
     def process_text(self, text_surfaces, text_list, color):
         test_text = ""
@@ -117,7 +118,7 @@ class UserInputField:
         screen = pygame.display.get_surface()
         pygame.draw.rect(screen, self.color, self.input_rect)
         pygame.draw.rect(screen, self.color_passive, (1180, 0, self.W, 36))
-
+        self.title = self.mode + " Editor"
         title_surface = pygame.font.Font('assets/joystix monospace.otf', self.titleFontSize).render(self.title, True,
                                                                                                     (255, 255, 255))
         numbering_font = pygame.font.Font('assets/joystix monospace.otf', 16)
@@ -216,6 +217,8 @@ class UserInputField:
     def set_active(self, value):
         self.active = value
 
+    def set_mode(self, value):
+        self.mode = value
     def set_user_text(self, value):
         self.user_text = value
 
@@ -290,6 +293,8 @@ class UserInputField:
         return self.active  # return active in a not fashion, to no make it confusing in game (active is False
         # means user input is running).
 
+    def get_mode(self):
+        return self.mode
     def get_error_processed(self):
         return self.errorProcessed
 

@@ -35,3 +35,21 @@ class Fox:
 
     def say(self, text):
         self.higher_entity.say(text)
+
+    def validate(self, problem, wood=False):
+        if self.higher_entity.get_mode() == 'Bridge':
+            if problem == wood:
+                self.higher_entity.set_problem_completed(True)
+        elif self.higher_entity.get_mode() == 'Ladder':
+            num_rows = len(problem)
+            if num_rows > 0:
+                num_columns = len(problem[0])
+            else:
+                num_columns = 0
+            if num_rows == 3 and num_columns == 4:
+                self.higher_entity.set_problem_try(problem)
+                if problem == [[1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0]]:
+                    self.higher_entity.set_problem_completed(True)
+        elif self.higher_entity.get_mode() == 'Spike':
+            if problem == [False, False, False]:
+                self.higher_entity.set_problem_completed(True)

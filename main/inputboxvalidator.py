@@ -14,7 +14,6 @@ def execute_code(obj, allowed):
 class InputBoxValidator:
 
     def __init__(self, player, tile_size, W, error_rect):
-
         self.text_list = []
         self.player = player
         self.queue = []
@@ -35,11 +34,20 @@ class InputBoxValidator:
         self.fox_feedback_rect = None
         self.show_feedback = False
         self.show_feedback_timer = pygame.time.get_ticks()
+        self.mode = "Player"
+        self.problem_completed = False
+        self.problem_try = None
 
     def set_text(self, text_to_validate):
         self.text_list = text_to_validate
         self.error_feedback = []
         self.errorLine = None
+
+    def set_problem_completed(self, value):
+        self.problem_completed = value
+
+    def set_mode(self, value):
+        self.mode = value
 
     def validate(self):
         self.finished = False
@@ -48,20 +56,33 @@ class InputBoxValidator:
                 file = open('main/user_execution.py', 'w')
                 for text in self.text_list:
                     file.write(text + "\n")
+                if self.mode == "Bridge":
+                    file.write("fox.validate(bridge, wood)")
+                elif self.mode == "Ladder":
+                    file.write("fox.validate(ladder)")
+                elif self.mode == "Spike":
+                    file.write("fox.validate(spike)")
                 file.close()
                 file = open('main/user_execution.py', 'r').read()
                 node = ast.parse(file.__str__())
                 for elem in node.body:
                     self.visitor.visit(elem)
                     if isinstance(elem, ast.Expr) and elem.value and isinstance(elem.value, ast.Pass):
+                        print(elem)
                         node.body.remove(elem)
                     # removes import statements
                     elif isinstance(elem, ast.Import):
                         node.body.remove(elem)
-
                 obj = compile(node, filename="<ast>", mode="exec")
                 # restricts the allowed variables to 'fox'.
                 allowed_vars = {"fox": self.fox}
+                if self.mode == "Bridge":
+                    allowed_vars = {"fox": self.fox, "bridge": [], "wood": [1, 2, 3]}
+                elif self.mode == "Ladder":
+                    allowed_vars = {"fox": self.fox, "ladder": [[0, 0, 0, 0],[0, 0, 0, 0],[0, 1, 1, 1]]}
+                elif self.mode == "Spike":
+                    allowed_vars = {"fox": self.fox, "spikes": [True, True, True]}
+
                 execute_code(obj, allowed_vars)
 
             except Exception as e:
@@ -88,6 +109,8 @@ class InputBoxValidator:
     def has_error(self):
         return self.errorLine is not None
 
+    def get_mode(self):
+        return self.mode
     def get_error_line(self):
         return self.errorLine
 
@@ -249,6 +272,12 @@ class InputBoxValidator:
             self.lastCooldown = pygame.time.get_ticks()
         return self.queue
 
+    def get_problem_completed(self):
+        return self.problem_completed
+
+    def get_problem_try(self):
+        return self.problem_try
+
     def isDone(self):
         if self.finished and pygame.time.get_ticks() > self.lastCooldown + 800:
             return True
@@ -257,6 +286,8 @@ class InputBoxValidator:
 
     def set_fox_feedback(self, text):
         self.fox_feedback.insert(0, text)
+
+    '''Callback functions used by the fox_class.'''
 
     def moveRight(self):
         self.queue.append(0)
@@ -291,3 +322,6 @@ class InputBoxValidator:
     def say(self, text):
         self.queue.append(6)
         self.set_fox_feedback(text)
+
+    def set_problem_try(self, value):
+        self.problem_try = value

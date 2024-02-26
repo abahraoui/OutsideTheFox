@@ -165,7 +165,7 @@ class Player(pygame.sprite.Sprite):
             display.blit(animation, (self.x - 48, self.y - 56))
         else:
             display.blit(animation, (self.x - 48, self.y - 48))
-        # pygame.draw.rect(pygame.display.get_surface(), 'red', self.rect, 3)  # Debug Player's hit box.
+        pygame.draw.rect(pygame.display.get_surface(), 'red', self.rect, 3)  # Debug Player's hit box.
         # pygame.draw.rect(pygame.display.get_surface(), 'purple',
         #                  pygame.Rect(self.rect.x, self.rect.y, self.rect.width, self.rect.height), 3)
         if (
@@ -225,14 +225,17 @@ class Player(pygame.sprite.Sprite):
         x = self.rect.x
         width = self.rect.width
         height = self.rect.height
+        below_coll_y = 0
         for coll in self.collider:
             coll_x = self.collider[coll][0]
             coll_y = self.collider[coll][1]
-            # pygame.draw.rect(pygame.display.get_surface(), "lightblue",
-            #                  pygame.Rect(coll_x, coll_y, self.tileSize, self.tileSize), 3)
+            pygame.draw.rect(pygame.display.get_surface(), "lightblue",
+                              pygame.Rect(coll_x, coll_y, self.tileSize, self.tileSize), 3)
 
             if coll_y > y and (coll_x <= x + width / 2 <= coll_x + self.tileSize):
                 below = True
+                if not self.moving and not self.lerping and not self.climbing:
+                    below_coll_y = coll_y
             if coll_y < y and (coll_x <= x + width / 2 <= coll_x + self.tileSize):
                 above = True
             if coll_x > x and (y < coll_y < y + height - 1 or y + 1 < coll_y + self.tileSize - 3 < y + height):
@@ -244,7 +247,8 @@ class Player(pygame.sprite.Sprite):
         if below:
             self.falling = False
             self.blockedBelow = True
-            self.y = math.ceil(self.y)
+            if not self.moving and not self.lerping and not self.climbing:
+                self.y = math.ceil(below_coll_y - 31)
         elif not self.climbing:
             self.falling = True
             self.blockedBelow = False
