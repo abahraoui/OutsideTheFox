@@ -221,6 +221,7 @@ class UserInputField:
 
     def clear_text(self):
         self.user_text = ""
+        self.char_offset = 0
         self.lastLineFilled = False
 
     def set_mouse_over(self, value):
@@ -273,8 +274,8 @@ class UserInputField:
     def decrement_offset(self):
         if self.char_offset > 0:
             self.char_offset -= 1
+
     def void_copy_rect_pos(self):
-        # print("void")
         self.copy_rect = pygame.Rect(0, 0, 0, 0)
         self.copy_rect_edited = False
 
@@ -303,7 +304,8 @@ class UserInputField:
             self.user_text = self.user_text[:-1]
         else:
             index = len(self.user_text) - 1 - self.char_offset
-            self.user_text = self.user_text[:index] + self.user_text[index + 1:]
+            if index >= 0:
+                self.user_text = self.user_text[:index] + self.user_text[index + 1:]
 
         if self.lastLineFilled:
             self.lastLineFilled = False
@@ -315,6 +317,7 @@ class UserInputField:
             self.oldLineCount = self.lineCount
             self.user_text = self.user_text[:-1]
             removed_line = True
+            self.char_offset = 0
 
         if len(self.user_text) > 0 and self.user_text[-1] == " " and removed_line:
             while len(self.user_text) > 0 and self.user_text[- 1] == " ":
@@ -334,10 +337,7 @@ class UserInputField:
                 self.user_text += text
             else:
                 index = len(self.user_text) - 1 - self.char_offset
-                if index - 1 < 0:
-                    self.user_text = text + self.user_text[index + 1:]
-                else:
-                    self.user_text = self.user_text[:index] + text + self.user_text[index + 1:]
+                self.user_text = self.user_text[:index + 1] + text + self.user_text[index + 1:]
 
     def get_text_saved(self):
         self.errorProcessed = False
