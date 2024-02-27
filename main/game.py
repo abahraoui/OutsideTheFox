@@ -72,6 +72,10 @@ def events():
                     else:
                         user_input.set_active(False)
                     if user_manual.mouse_colliding(event.pos):
+                        user_manual.change_state("M")
+                        user_manual.flip_active()
+                    if sign_pressed:
+                        user_manual.change_state("L")
                         user_manual.flip_active()
 
                 if event.type == pygame.KEYDOWN and user_input.get_active():
@@ -132,7 +136,7 @@ def change_scroll_direction():
 
 # Draw each tile based on position in the grid.
 def draw_world():
-    global coordinates_filled, score, finished_level, current_bridge_problem, current_sign
+    global coordinates_filled, score, finished_level, current_bridge_problem, current_sign, arrow, sign_pressed
     ground.empty()
     for y, row in enumerate(world_data):
         for x, tile in enumerate(row):
@@ -178,16 +182,32 @@ def draw_world():
                             if bridge_list and not b_list[problem_index][1][0].completed and sign_list[current_sign] == t:
                                 pos = pygame.mouse.get_pos()
                                 t.draw()
-                                if t.get_rect().collidepoint(pos) and pygame.mouse.get_pressed()[0] == 1:
-                                    match b_list[problem_index][1][0].id:
-                                        case 8:
-                                            input_validator.set_mode("Bridge")
-                                        case 23:
-                                            input_validator.set_mode("Ladder")
-                                        case 24:
-                                            input_validator.set_mode("Spike")
+                                if user_input.get_mode() == "Player":
+                                    if arrow is None:
+                                        arrow = cherry_tile.Cherry(x * TILE_SIZE - scroll - 45, y * TILE_SIZE - 125, arrow_animation_list,
+                                                               "arrow")
+                                elif user_input.get_mode() == "Problem":
+                                    arrow = None
+                                if t.get_rect().collidepoint(pos):
+                                    sign_pressed = True
+                                    b_list[problem_index][1][0].set_hovering(True)
+                                    if pygame.mouse.get_pressed()[0] == 1:
+                                        match b_list[problem_index][1][0].id:
+                                            case 8:
+                                                input_validator.set_mode("Bridge")
+                                                input_validator.set_problem_size(b_list[problem_index][1][0].get_problem_size())
+                                            case 23:
+                                                input_validator.set_mode("Ladder")
+                                                input_validator.set_problem_size(b_list[problem_index][1][0].get_problem_size())
+                                            case 24:
+                                                input_validator.set_mode("Spike")
+                                                input_validator.set_problem_size(b_list[problem_index][1][0].get_problem_size())
 
-                                    user_input.set_mode("Problem")
+                                        user_input.set_mode("Problem")
+                                else:
+                                    sign_pressed = False
+                                    b_list[problem_index][1][0].set_hovering(False)
+
                 elif tile == 8:
                     if "8" not in bridge_list:
                         bridge_list["8"] = None, {}
@@ -196,7 +216,7 @@ def draw_world():
                     elif (y, x) in bridge_list["8"][1]:
                         bridge_list["8"][1][(y, x)] = tile
                         if len(bridge_list["8"][1]) > 0 and bridge_list["8"][0] is None:
-                            bridge = bridge_class.Bridge(W, H, bridge_list["8"][1], False, TILE_SIZE, 8)
+                            bridge = bridge_class.Bridge(W, H, bridge_list["8"][1], False, TILE_SIZE, 8, bridge_list["8"][1])
                             bridge_list["8"] = bridge, bridge_list["8"][1]
                         if "8" in bridge_list and len(bridge_list["8"][1]) > 0:
                             bridge_list["8"][0].draw(P, scroll, TILE_SIZE, tiles_list)
@@ -208,7 +228,7 @@ def draw_world():
                     elif (y, x) in bridge_list["23"][1]:
                         bridge_list["23"][1][(y, x)] = tile
                         if len(bridge_list["23"][1]) > 0 and bridge_list["23"][0] is None:
-                            bridge = bridge_class.Bridge(W, H, bridge_list["23"][1], False, TILE_SIZE, 23)
+                            bridge = bridge_class.Bridge(W, H, bridge_list["23"][1], False, TILE_SIZE, 23, bridge_list["23"][1])
                             bridge_list["23"] = bridge, bridge_list["23"][1]
                         if "23" in bridge_list and len(bridge_list["23"][1]) > 0:
                             bridge_list["23"][0].draw(P, scroll, TILE_SIZE, tiles_list)
@@ -220,7 +240,7 @@ def draw_world():
                     elif (y, x) in bridge_list["24"][1]:
                         bridge_list["24"][1][(y, x)] = tile
                         if len(bridge_list["24"][1]) > 0 and bridge_list["24"][0] is None:
-                            bridge = bridge_class.Bridge(W, H, bridge_list["24"][1], False, TILE_SIZE, 24)
+                            bridge = bridge_class.Bridge(W, H, bridge_list["24"][1], False, TILE_SIZE, 24, bridge_list["24"][1])
                             bridge_list["24"] = bridge, bridge_list["24"][1]
                         if "24" in bridge_list and len(bridge_list["24"][1]) > 0:
                             bridge_list["24"][0].draw(P, scroll, TILE_SIZE, tiles_list)
@@ -267,7 +287,13 @@ def draw_debug_console():
 
 
 def load_level_data(menu=False):
-    global scroll, world_data, coordinates_filled, world_coordinates, cherry_data, level
+    global scroll, world_data, coordinates_filled, world_coordinates, cherry_data, level, bridge_list, sign_list, \
+        current_bridge_problem, current_bridge_problem, current_sign,problem_index
+    bridge_list = OrderedDict()
+    sign_list = OrderedDict()
+    current_bridge_problem = 0
+    current_sign = 0
+    problem_index = 0
     cherry_data = {}
     coordinates_filled = False
     world_data = []
@@ -393,6 +419,7 @@ score = 0
 background_tiles = [2, 15, 16, 17, 18, 19, 20, 22]
 bridge_list = OrderedDict()
 sign_list = OrderedDict()
+sign_pressed = False
 current_bridge_problem = 0
 current_sign = 0
 problem_index = 0
@@ -491,7 +518,7 @@ player_run_cycle = cycle(player_animation_list[1])
 player_anim = next(player_run_cycle)
 
 start_screen = startscreen.StartScreen(pygame.time.get_ticks(), player_run_cycle, start_text, start_rect,
-                                       (W + SIDE_MARGIN, H), "", "Well done on finishing the level !")
+                                       (W + SIDE_MARGIN, H), "", "")
 start_screen.set_max_level_unlocked(max_level)
 start_screen.set_level_wanted(level)
 
@@ -526,8 +553,7 @@ level_button = button.Button(5, 180, level_icon, 1.5, "lightgreen", (0, 0, 128))
 pause_icon = pygame.image.load("assets/pause_icon.png").convert_alpha()
 pause_button = button.Button(60, 180, pause_icon, 1.5, "lightgreen", (0, 0, 128))
 
-arrow = cherry_tile.Cherry(0, 0, arrow_animation_list,
-                           "arrow")
+arrow = None
 restart_text = font.render('Restart', True, "white")
 restart_button = button.Button(5, 125, restart_text, 1, "lightgreen", (0, 0, 128))
 
@@ -536,7 +562,6 @@ bridge = None
 loaded_game_level = False
 while True:
     draw_bg()
-    # arrow.draw()
     events()
     if not start_screen.get_paused() and P:
         if not loaded_game_level:
@@ -545,14 +570,10 @@ while True:
         if start_screen.get_level_wanted() != level:
             save_level_data(user_input.get_text_saved())
             level = start_screen.get_level_wanted()
-            bridge_list = OrderedDict()
-            sign_list = OrderedDict()
-            current_bridge_problem = 0
-            current_sign = 0
-            problem_index = 0
             load_level_data()
             score = 0
             user_input.set_error_processed()
+            user_input.set_mode("Player")
             P = player.Player(3, 30, player_animation_list, (W, H), TILE_SIZE)
             scroll = 0
             scrolling = False
@@ -561,16 +582,20 @@ while True:
             input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W, user_input.get_feedback_rect())
         draw_world()
         if input_validator.isDone():
-            if input_validator.get_mode() == "Ladder" and input_validator.get_problem_try() is not None:
-                bridge_list[current_bridge_problem][0].set_ladder_problem(input_validator.get_problem_try())
+            if input_validator.get_mode() != "Player" and input_validator.get_problem_try() is not None and not bridge_list[current_bridge_problem][0].get_show_feedback():
+                bridge_list[current_bridge_problem][0].set_problem_try(input_validator.get_problem_try())
+                input_validator.set_problem_try(None)
             if input_validator.get_problem_completed():
                 bridge_list[current_bridge_problem][0].validate_problem()
                 problem_index += 1
                 input_validator.set_mode("Player")
+                input_validator.say("Well done !")
                 user_input.set_mode("Player")
 
                 input_validator.set_problem_completed(False)
             draw_grid()
+            if arrow is not None:
+                arrow.draw()
         else:
             user_input.set_mouse_over(False)
             user_input.set_active(False)
@@ -602,6 +627,7 @@ while True:
                 start_screen.set_paused()
 
             if pause_button.draw(screen):
+                user_input.set_mode("Player")
                 start_screen.set_state("M")
                 start_screen.start_screen_on(pygame.time.get_ticks())
                 start_screen.set_paused()
@@ -638,11 +664,13 @@ while True:
         # start_screen.start_screen_on(pygame.time.get_ticks())
         # start_screen.set_paused()
         P = player.Player(3, 30, player_animation_list, (W, H), TILE_SIZE)
+        user_input.set_mode("Player")
         scroll = 0
         scrolling = False
         goal_scroll = 0
         P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
         input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W, user_input.get_feedback_rect())
+        input_validator.say("Oh no that got me let's try over!")
 
     elif finished_level:
         finished_level = False
@@ -655,18 +683,15 @@ while True:
         user_input.increment_line_limit()
         level += 1
         start_screen.set_level_wanted(level)
-        bridge_list = OrderedDict()
-        sign_list = OrderedDict()
-        current_bridge_problem = 0
-        current_sign = 0
-        problem_index = 0
         load_level_data()
-        score = 0
         scroll = 0
         scrolling = False
         goal_scroll = 0
         P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
         input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W, user_input.get_feedback_rect())
+        user_input.set_mode("Player")
+        start_screen.set_end_text(f"Well done on finishing the level, you score was: {score}!")
+        score = 0
         start_screen.set_state("E")
         start_screen.start_screen_on(pygame.time.get_ticks())
         start_screen.set_paused()

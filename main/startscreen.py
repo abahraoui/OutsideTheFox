@@ -51,9 +51,9 @@ class StartScreen:
         self.help_surface = []
         self.end_level_text = []
 
-        limit = self.menu_rect.bottom - 200
-        usermanual.parse_text(help_text, self.help_surface, self.text_font, limit, self.menu_rect.width)
-        usermanual.parse_text(end_text, self.end_level_text, self.text_font, limit, self.menu_rect.width)
+        self.limit = self.menu_rect.bottom - 200
+        usermanual.parse_text(help_text, self.help_surface, self.text_font, self.limit, self.menu_rect.width)
+        usermanual.parse_text(end_text, self.end_level_text, self.text_font, self.limit, self.menu_rect.width)
 
         self.play_button = make_button("Play", self.W, self.H, -200)
         self.help_button = make_button("Help", self.W, self.H, 100)
@@ -267,6 +267,10 @@ class StartScreen:
 
     def set_paused(self):
         self.paused = True
+
+    def set_end_text(self, text):
+        usermanual.parse_text(text, self.end_level_text, self.text_font, self.limit, self.menu_rect.width)
+
 
     def set_level_wanted(self, value):
         self.level_wanted = value

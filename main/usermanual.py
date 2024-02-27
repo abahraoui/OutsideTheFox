@@ -45,7 +45,6 @@ def parse_text(text_to_parse, surface_to_append, font, limit, active_W):
 class UserManual:
 
     def __init__(self, x, y, user_manual_text, level_text, hint_text):
-
         self.x = x
         self.y = y
         self.active = False

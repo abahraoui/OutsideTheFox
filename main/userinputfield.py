@@ -116,11 +116,20 @@ class UserInputField:
         if not self.user_text:
             self.user_text = ' '
         screen = pygame.display.get_surface()
-        pygame.draw.rect(screen, self.color, self.input_rect)
-        pygame.draw.rect(screen, self.color_passive, (1180, 0, self.W, 36))
         self.title = self.mode + " Editor"
+        if self.mode == "Player":
+            title_color = (255, 255, 255)
+            pygame.draw.rect(screen, self.color, self.input_rect)
+            pygame.draw.rect(screen, self.color_passive, (1180, 0, self.W, 36))
+
+        else:
+            title_color = (255, 253, 208)
+            bg_color = "purple" if not self.active else self.color
+            pygame.draw.rect(screen, bg_color, self.input_rect)
+            pygame.draw.rect(screen, "purple", (1180, 0, self.W, 36))
+
         title_surface = pygame.font.Font('assets/joystix monospace.otf', self.titleFontSize).render(self.title, True,
-                                                                                                    (255, 255, 255))
+                                                                                                    title_color)
         numbering_font = pygame.font.Font('assets/joystix monospace.otf', 16)
         screen.blit(title_surface, (self.input_rect.x + (self.W - title_surface.get_width()) / 2, self.input_rect.y))
         pygame.draw.rect(screen, 'white', (1180, 36, self.W,
@@ -219,6 +228,7 @@ class UserInputField:
 
     def set_mode(self, value):
         self.mode = value
+
     def set_user_text(self, value):
         self.user_text = value
 
@@ -295,6 +305,7 @@ class UserInputField:
 
     def get_mode(self):
         return self.mode
+
     def get_error_processed(self):
         return self.errorProcessed
 

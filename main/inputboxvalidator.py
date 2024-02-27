@@ -37,6 +37,7 @@ class InputBoxValidator:
         self.mode = "Player"
         self.problem_completed = False
         self.problem_try = None
+        self.problem_size = 0
 
     def set_text(self, text_to_validate):
         self.text_list = text_to_validate
@@ -81,7 +82,7 @@ class InputBoxValidator:
                 elif self.mode == "Ladder":
                     allowed_vars = {"fox": self.fox, "ladder": [[0, 0, 0, 0],[0, 0, 0, 0],[0, 1, 1, 1]]}
                 elif self.mode == "Spike":
-                    allowed_vars = {"fox": self.fox, "spikes": [True, True, True]}
+                    allowed_vars = {"fox": self.fox, "spike": [True, True, True]}
 
                 execute_code(obj, allowed_vars)
 
@@ -173,7 +174,11 @@ class InputBoxValidator:
         for i in range(len(text_surfaces)):
             current_surface = text_surfaces[i]
             self.screen.blit(current_surface[0], (self.fox_feedback_rect.topleft[0] + 5, start_y + 25 * i))
-        if pygame.time.get_ticks() > self.show_feedback_timer + 1500:
+        if self.mode != 'Player':
+            cooldown = 3000
+        else:
+            cooldown = 1500
+        if pygame.time.get_ticks() > self.show_feedback_timer + cooldown:
             self.show_feedback = False
 
     def process_queue(self, scroll):
@@ -239,7 +244,7 @@ class InputBoxValidator:
                         self.lastQueueCooldown = pygame.time.get_ticks()
                         return 0, scrolling
                     elif not self.player.canClimb:
-                        self.set_fox_feedback("Sadly I cannot climb up, there is no ladder!")
+                        self.set_fox_feedback("Sadly I cannot climb up, there is no valid ladder!")
                         self.process_fox_feedback()
                         self.queue.pop(0)
                         self.lastQueueCooldown = pygame.time.get_ticks()
@@ -253,7 +258,7 @@ class InputBoxValidator:
                         return 0, scrolling
                     elif self.player.get_blocked_below() or not self.player.canClimb:  # and pygame.time.get_ticks() >
                         # self.lastQueueCooldown + 500:
-                        self.set_fox_feedback("Darn I cannot climb down, there is no ladder!")
+                        self.set_fox_feedback("Darn I cannot climb down, there is no ladder or a floor tile is blocking me!")
                         self.process_fox_feedback()
                         self.queue.pop(0)
                         self.lastQueueCooldown = pygame.time.get_ticks()
@@ -283,6 +288,12 @@ class InputBoxValidator:
             return True
         else:
             return False
+
+    def set_problem_size(self, value):
+        self.problem_size = value
+
+    def get_problem_size(self):
+        return self.problem_size
 
     def set_fox_feedback(self, text):
         self.fox_feedback.insert(0, text)
