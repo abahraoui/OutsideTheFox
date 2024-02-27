@@ -1,1 +1,1 @@
-ladder = "lol"                                bridge = [1,1,1]                             ladder = [] 
+ 

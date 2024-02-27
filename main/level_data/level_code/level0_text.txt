@@ -1,1 +1,1 @@
- 
+fox.moveRight()                            fox.moveRight()                           fox.moveRight()                           fox.moveRight()                           fox.moveRight()                           fox.moveRight() 

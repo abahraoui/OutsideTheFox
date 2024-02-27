@@ -136,7 +136,7 @@ def change_scroll_direction():
 
 # Draw each tile based on position in the grid.
 def draw_world():
-    global coordinates_filled, score, finished_level, current_bridge_problem, current_sign, arrow, sign_pressed
+    global coordinates_filled, score, finished_level, current_bridge_problem, current_sign, arrow, sign_pressed, cherry_count
     ground.empty()
     for y, row in enumerate(world_data):
         for x, tile in enumerate(row):
@@ -168,7 +168,8 @@ def draw_world():
                             jump_sound.play()
                             jump_sound.set_volume(1)
                             cherry_data[(y, x)] = "Removed"
-                            score += 100
+                            score += 50
+                            cherry_count += 1
                 elif tile == 22:
                     if (y, x) not in sign_list:
                         sign_list[(y, x)] = t
@@ -412,10 +413,12 @@ ROWS = 16
 MAX_COLS = 150
 TILE_SIZE = H // ROWS
 TILE_TYPES = 25
-level = 1
+level = 0
 max_level = 5
+run_tries = 0
 finished_level = False
 score = 0
+cherry_count = 0
 background_tiles = [2, 15, 16, 17, 18, 19, 20, 22]
 bridge_list = OrderedDict()
 sign_list = OrderedDict()
@@ -572,6 +575,8 @@ while True:
             level = start_screen.get_level_wanted()
             load_level_data()
             score = 0
+            run_tries = 0
+            cherry_count = 0
             user_input.set_error_processed()
             user_input.set_mode("Player")
             P = player.Player(3, 30, player_animation_list, (W, H), TILE_SIZE)
@@ -602,6 +607,8 @@ while True:
         if user_input.draw():
             input_validator.set_text(user_input.get_text_saved())
             input_validator.validate()
+            run_tries += 1
+            score -= 10
         if input_validator.get_error_feedback():
             input_validator.draw_error_feedback()
         if input_validator.has_error() and not user_input.get_error_processed():
@@ -616,7 +623,10 @@ while True:
                 input_validator.draw_fox_feedback()
             # input_validator.draw_fox_feedback()
             draw_text(f"Level: {level}", font, (0, 0, 128), 5, 0)
-            draw_text(f"Score: {score}", font, (0, 0, 128), 5, 60)
+            screen.blit(cherry_animation_list[0], (5, 60))
+            draw_text(f"  {cherry_count}", font, (0, 0, 128), 5, 60)
+            draw_text(f"Tries: {run_tries}", font, (0, 0, 128), 250, 0)
+
             # draw_text("Music:", font, (0, 0, 128), 5, 125)
             music_button.draw(screen)
             if level_button.draw(screen):
@@ -660,6 +670,9 @@ while True:
                 P = None
                 load_level_data()
                 score = 0
+                run_tries = 0
+                cherry_count = 0
+
     elif P is None and not finished_level:
         # start_screen.start_screen_on(pygame.time.get_ticks())
         # start_screen.set_paused()
@@ -690,8 +703,10 @@ while True:
         P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
         input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W, user_input.get_feedback_rect())
         user_input.set_mode("Player")
-        start_screen.set_end_text(f"Well done on finishing the level, you score was: {score}!")
+        start_screen.set_end_text(f"Well done on finishing the level, your score was: {score}!")
         score = 0
+        run_tries = 0
+        cherry_count = 0
         start_screen.set_state("E")
         start_screen.start_screen_on(pygame.time.get_ticks())
         start_screen.set_paused()
