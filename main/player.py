@@ -162,7 +162,7 @@ class Player(pygame.sprite.Sprite):
             animation = pygame.transform.flip(self.animationList[self.action][self.currentAnim], True, False)
             animation.set_colorkey((0, 0, 0))
         if self.crouching:
-            display.blit(animation, (self.x - 48, self.y - 56))
+            display.blit(animation, (self.x - 48, self.y - 52))
         else:
             display.blit(animation, (self.x - 48, self.y - 48))
         # pygame.draw.rect(pygame.display.get_surface(), 'red', self.rect, 3)  # Debug Player's hit box.
@@ -248,7 +248,8 @@ class Player(pygame.sprite.Sprite):
             self.falling = False
             self.blockedBelow = True
             if not self.moving and not self.lerping and not self.climbing:
-                self.y = math.ceil(below_coll_y - 31)
+                offset = math.ceil(self.rect.height / 2) - 1
+                self.y = math.ceil(below_coll_y - offset)
         elif not self.climbing:
             self.falling = True
             self.blockedBelow = False
