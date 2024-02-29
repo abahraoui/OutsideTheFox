@@ -25,7 +25,11 @@ def parse_text(text_to_parse, surface_to_append, font, limit, active_W):
     for i in range(len(text_to_parse)):
         if text_to_parse[i] == "\n":
             page += check_limit_y(limit, text_surface)
-            surface_to_append.append((text_surface, page))
+            if i > 0 and text_to_parse[i-1] == "\n":
+                text_surface = font.render(test_text, True, (255, 255, 255))
+                surface_to_append.append((text_surface, page))
+            else:
+                surface_to_append.append((text_surface, page))
             text_list.append(test_text)
             test_text = ""
             continue
@@ -57,8 +61,7 @@ class UserManual:
         self.inactive_rect = pygame.Rect(self.x + 115, self.y + 15, 70, self.y + 70)
         self.active_rect = pygame.Rect(self.x - 250, 25, self.active_W, self.y + 600)
         self.rect = self.inactive_rect
-        self.text_font = pygame.font.Font('assets/joystix monospace.otf', 16)
-        print(self.active_rect.y)
+        self.text_font = pygame.font.SysFont('arialblack', 16)
         limit = self.active_rect.bottom - 215
         self.manual_text_surface = []
         parse_text(self.user_manual_text, self.manual_text_surface, self.text_font, limit, self.active_W)
@@ -142,10 +145,16 @@ class UserManual:
                                                start_y + 25 * (i + 1) + 20
                                                ))
 
-            if self.previousPageButton.draw(screen) and self.page > 1:
-                self.page -= 1
-            if self.nextPageButton.draw(screen) and len([x for x in self.text_surface if x[1] == self.page + 1]) > 0:
-                self.page += 1
+            if self.previousPageButton.draw(screen):
+                if self.page == 1:
+                    self.page = self.text_surface[-1][1]
+                else:
+                    self.page -= 1
+            if self.nextPageButton.draw(screen):
+                if self.page == self.text_surface[-1][1]:
+                    self.page = 1
+                else:
+                    self.page += 1
 
             page_surface = pygame.font.Font('assets/joystix monospace.otf', 16).render(f"Page: {self.page}", True,
                                                                                        "white")

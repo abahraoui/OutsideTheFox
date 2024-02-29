@@ -1,0 +1,37 @@
+Introduction:
+
+Welcome to Outside The Fox. This game aims to teach you some basic programming concepts in Python. This section is going to teach you about the game mechanics and common components of the game.
+
+The 'User Manual' or 'Help' button is divided in three sections, the 'Manual' which is this section, the 'Level' section which tells you about the level you are currently playing, how to beat it and is going to teach you some programming knowledge required to beat the level. The 'Tips' section is going to give you advanced pointers to help you beat the level when you are stuck.
+
+Editor:
+
+The 'Player Editor' on the right of the screen is a code editor where you will be able to write code to make the fox move, jump, climb and more. As you progress in the levels you will discover and learn more about it. It makes the variable 'fox', which represents the fox, available to you, which you will use to make 'function calls' to make the fox perform actions such as 'fox.moveRight()'. The player editor has two main buttons, the 'RUN' button which executes the code you wrote and the 'CLEAR' button which removes all the code you wrote, so you can start over. You can press any keys to add text to the editor, the 'DELETE' key removes one character at a time and press the 'ENTER' key makes you go the next line. You can go back and forth in the line you're currently editing with the 'LEFT' and 'RIGHT' keys, but you cannot go up and down between lines. You can copy and paste using 'CTRL+C' and 'CTRL+V', when copying from the editor, first select the lines you want to copy by putting them in the copying rectangle you'll draw by pressing the mouse and moving it, then press 'CTRL+C'. Make sure you selected the editor when doing that (e.g. the color is of the editor is lightblue). When executing the code and an error happens, the editor is going to highlight the erroneous line in red and give you the reason of the error. If the error message seems unclear, and you cannot understand where the error in your code is, try to look it up as the error messages are real messages given back when running Python code and answers and explanations for them are wildly available.
+Python features a syntax property called 'Indentation' which signifies that code statements should start at the same character point if they are in the same block level. Pictured in the following example:
+
+print("Hello")
+if True:
+  print("Hi")
+
+In this example, the first 'print("Hello")' statement starts at the same index as the 'if True:' statement. But the 'print("Hi")' statement start with a space before it, as it is in another block level symbolised here by the ":" in the "if True:" statement. Every statement that should be in that block should start with the same 'indentation' as the 'print("Hi")' statement.
+
+In the editor, a visual aid is featured to help with 'indentation', as '_' (underscore) characters colored in grey will appear when you add a 'space' at the start of the line.
+
+The 'Problem Editor' is a special version of the player editor and has the same functionalities. It will be available to you when you will need to solve problems to progress through the level. It is going to replace the player editor after clicking on a sign tile highlighted by an arrow. The 'fox' variable is still available to you as well as other variables like 'bridge' or 'ladder', required to solve the problem. When clicking the sign, you will be directed to the 'Level' tab of the user manual which will give you instructions to solve the problem.
+
+Scoring and miscellaneous:
+
+The game has a scoring system based on the number of cherries you collected and the amount of tries which are the number of times you press the 'RUN' button. You can always go back to the levels you've completed to try to get a better score by pressing the "Levels" button which is next to the "Pause" button, or the "Pick" button in the menu. Turn on and off the music by pressing the "Music" button which is represented by a music note icon.
+
+If stuck in the level or willing to retry from scratch, press the "Restart" button, above the pause button.
+
+Loop disclaimer: If you are trying to use a loop, and it happens to be infinite, shut down the game by clicking on the 'X' button in the top right corner, and restart. 'fox' functions like 'canMove' which returns a True/False value can only be used in conditional statements like 'if', using them in 'while' loops will result in an infinite loop.
+
+Editor keys:
+  - Any keys to add characters to your code.
+  - DELETE
+  - ENTER
+  - LEFT
+  - RIGHT
+  - CTRL+C
+  - CTRL+V

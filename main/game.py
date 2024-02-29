@@ -427,6 +427,12 @@ current_bridge_problem = 0
 current_sign = 0
 problem_index = 0
 
+with open("assets/txt_files/manual.txt") as file:
+    manual_text = ""
+    for line in file.readlines():
+        manual_text += line.__str__()
+
+
 # Loads the tiles for the level editor.
 tiles_list = []
 for x in range(TILE_TYPES):
@@ -521,7 +527,7 @@ player_run_cycle = cycle(player_animation_list[1])
 player_anim = next(player_run_cycle)
 
 start_screen = startscreen.StartScreen(pygame.time.get_ticks(), player_run_cycle, start_text, start_rect,
-                                       (W + SIDE_MARGIN, H), "", "")
+                                       (W + SIDE_MARGIN, H), manual_text, "")
 start_screen.set_max_level_unlocked(max_level)
 start_screen.set_level_wanted(level)
 
@@ -539,7 +545,7 @@ player_start_pos = world_coordinates[14][5]
 P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
 
 input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W, user_input.get_feedback_rect())
-user_manual = usermanual.UserManual(980, 0, "", "In this level, you have to reach the end!",
+user_manual = usermanual.UserManual(980, 0, manual_text, "In this level, you have to reach the end!",
                                     "Try using 'fox.moveRight()' and 'fox.jump()' if you find yourself blocked by an obstacle!\n")
 
 off = pygame.image.load("assets/music_off.png").convert_alpha()

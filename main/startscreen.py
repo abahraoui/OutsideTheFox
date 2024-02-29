@@ -52,7 +52,7 @@ class StartScreen:
         self.end_level_text = []
 
         self.limit = self.menu_rect.bottom - 200
-        usermanual.parse_text(help_text, self.help_surface, self.text_font, self.limit, self.menu_rect.width)
+        usermanual.parse_text(help_text, self.help_surface, pygame.font.SysFont("arialblack", 16), self.limit, self.menu_rect.width)
         usermanual.parse_text(end_text, self.end_level_text, self.text_font, self.limit, self.menu_rect.width)
 
         self.play_button = make_button("Play", self.W, self.H, -200)
