@@ -58,7 +58,7 @@ class InputBoxValidator:
                 for text in self.text_list:
                     file.write(text + "\n")
                 if self.mode == "Bridge":
-                    file.write("fox.validate(bridge, wood)")
+                    file.write("fox.validate(bridge)")
                 elif self.mode == "Ladder":
                     file.write("fox.validate(ladder)")
                 elif self.mode == "Spike":
@@ -78,7 +78,7 @@ class InputBoxValidator:
                 # restricts the allowed variables to 'fox'.
                 allowed_vars = {"fox": self.fox}
                 if self.mode == "Bridge":
-                    allowed_vars = {"fox": self.fox, "bridge": [], "wood": [1, 2, 3]}
+                    allowed_vars = {"fox": self.fox, "bridge": []}
                 elif self.mode == "Ladder":
                     allowed_vars = {"fox": self.fox, "ladder": [[0, 0, 0, 0],[0, 0, 0, 0],[0, 1, 1, 1]]}
                 elif self.mode == "Spike":
@@ -139,17 +139,18 @@ class InputBoxValidator:
         current_text = self.fox_feedback[0]
         text = self.fox_feedback[0]
         match current_text:
-            case "canClimb()":
+            case "canClimb":
                 text = str(self.canClimb()) + (", I can climb." if self.canClimb() else ", I cannot climb.")
-            case "canMoveRight()":
+            case "canMoveRight":
                 text = str(self.canMoveRight()) + (", I can move right." if self.canMoveRight() else ", I cannot move right.")
-            case "canMoveLeft()":
+            case "canMoveLeft":
                 text = str(self.canMoveLeft()) + (", I can move left." if self.canMoveLeft() else ", I cannot move left.")
-            case "canJump()":
+            case "canJump":
                 text = str(self.canJump()) + (", I can jump." if self.canJump() else ", I cannot jump.")
             case _:
                 text = current_text
-
+        if not isinstance(text, str):
+            text = "This is not a valid string."
         limit = self.fox_feedback_rect.height - 50
         usermanual.parse_text(text, self.fox_feedback_surfaces, self.feedback_font, limit,
                               self.fox_feedback_rect.width)

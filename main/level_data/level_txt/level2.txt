@@ -1,0 +1,17 @@
+Welcome to the second level. The goal of this level is to learn about chaining function calls one after another to combine different movements, as well as learning to write comments if you want to document what you are doing.
+
+In this level, a ground tile is blocking you to the right, you need to use the fox's 'jump()' function with the functions you already know to move and beat the level. 'jump()' function usage example:
+
+fox.jump()
+
+Try to experiment with this and the fox's move functions to obtain the movement sequence you need.
+
+Remember to put each function call statement in its own code line, to avoid getting errors.
+
+Comments are really useful to clarify what each part of your code is doing. In Python, single line comments require the '#' character at each code line and multiple lines comments use ''' three opening apostrophes to open the comment and ''' three closing apostrophes to close the comment. Examples:
+
+# Hello this is a comment.
+''' Hello this is
+ a multi-line comment '''
+
+Try to use those when combining different functions, to clarify to yourself what each part is doing.

@@ -1,0 +1,22 @@
+Welcome to the first level. To beat this level you have to reach the door. The goal of this section is to learn about function call statements and how to make the fox move right or left. As the door is to your right, you should try to use the function 'moveRight()' of the 'fox' object which you control. This function moves the fox one tile to the right.
+
+A function call consists of a callable object, here called 'fox' and a function defined in the object, here called 'moveRight()'. To write the function call,  you need to chain the two components with a '.' (dot), and add two round brackets '()', one opening and one enclosing, as pictured in the following example:
+
+fox.moveRight()
+
+The '.' signifies that the function is doing an action to the object on the left side of it. The '()' refers to the calling the function, be careful to always put the '()' part when you write a function call, otherwise it won't work and in this case the fox won't move right.
+
+!!! Each function call should be in a single code line and in some cases can carry over to the next line if it's too long.
+
+If you want to write multiple function call statements do:
+
+fox.moveRight()
+fox.moveRight()
+
+! Do not do:
+
+fox.moveRight() fox.moveRight()
+
+The above example will give you an error.
+
+You can also move left using the function 'moveLeft()'. It has a similar functioning as 'moveRight()' but moves one tile to the left.

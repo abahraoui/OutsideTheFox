@@ -1,4 +1,5 @@
 import math
+import os
 import pickle
 import sys
 from itertools import cycle
@@ -72,11 +73,16 @@ def events():
                     else:
                         user_input.set_active(False)
                     if user_manual.mouse_colliding(event.pos):
-                        user_manual.change_state("M")
+                        user_manual.change_state("L")
                         user_manual.flip_active()
                     if sign_pressed:
                         user_manual.change_state("L")
                         user_manual.flip_active()
+                if event.type == pygame.KEYDOWN and user_manual.get_active():
+                    if event.key == pygame.K_RIGHT:
+                        user_manual.change_page("R")
+                    elif event.key == pygame.K_LEFT:
+                        user_manual.change_page("L")
 
                 if event.type == pygame.KEYDOWN and user_input.get_active():
                     # Check for backspace
@@ -109,6 +115,13 @@ def events():
                     user_input.set_copy_rect_end_pos(pygame.mouse.get_pos())
                 else:
                     user_input.void_copy_rect_pos()
+            else:
+                if event.type == pygame.KEYDOWN and (
+                        start_screen.get_state() == "L" or start_screen.get_state() == "H"):
+                    if event.key == pygame.K_RIGHT:
+                        start_screen.change_page("R")
+                    elif event.key == pygame.K_LEFT:
+                        start_screen.change_page("L")
 
 
 # Draws and makes the background scrollable.
@@ -180,13 +193,15 @@ def draw_world():
                         if problem_index < len(b_list) and b_list[problem_index][1][0] is not None:
                             current_bridge_problem = b_list[problem_index][0]
                             current_sign = s_list[problem_index][0]
-                            if bridge_list and not b_list[problem_index][1][0].completed and sign_list[current_sign] == t:
+                            if bridge_list and not b_list[problem_index][1][0].completed and sign_list[
+                                current_sign] == t:
                                 pos = pygame.mouse.get_pos()
                                 t.draw()
                                 if user_input.get_mode() == "Player":
                                     if arrow is None:
-                                        arrow = cherry_tile.Cherry(x * TILE_SIZE - scroll - 45, y * TILE_SIZE - 125, arrow_animation_list,
-                                                               "arrow")
+                                        arrow = cherry_tile.Cherry(x * TILE_SIZE - scroll - 45, y * TILE_SIZE - 125,
+                                                                   arrow_animation_list,
+                                                                   "arrow")
                                 elif user_input.get_mode() == "Problem":
                                     arrow = None
                                 if t.get_rect().collidepoint(pos):
@@ -196,13 +211,16 @@ def draw_world():
                                         match b_list[problem_index][1][0].id:
                                             case 8:
                                                 input_validator.set_mode("Bridge")
-                                                input_validator.set_problem_size(b_list[problem_index][1][0].get_problem_size())
+                                                input_validator.set_problem_size(
+                                                    b_list[problem_index][1][0].get_problem_size())
                                             case 23:
                                                 input_validator.set_mode("Ladder")
-                                                input_validator.set_problem_size(b_list[problem_index][1][0].get_problem_size())
+                                                input_validator.set_problem_size(
+                                                    b_list[problem_index][1][0].get_problem_size())
                                             case 24:
                                                 input_validator.set_mode("Spike")
-                                                input_validator.set_problem_size(b_list[problem_index][1][0].get_problem_size())
+                                                input_validator.set_problem_size(
+                                                    b_list[problem_index][1][0].get_problem_size())
 
                                         user_input.set_mode("Problem")
                                 else:
@@ -217,7 +235,8 @@ def draw_world():
                     elif (y, x) in bridge_list["8"][1]:
                         bridge_list["8"][1][(y, x)] = tile
                         if len(bridge_list["8"][1]) > 0 and bridge_list["8"][0] is None:
-                            bridge = bridge_class.Bridge(W, H, bridge_list["8"][1], False, TILE_SIZE, 8, bridge_list["8"][1])
+                            bridge = bridge_class.Bridge(W, H, bridge_list["8"][1], False, TILE_SIZE, 8,
+                                                         bridge_list["8"][1])
                             bridge_list["8"] = bridge, bridge_list["8"][1]
                         if "8" in bridge_list and len(bridge_list["8"][1]) > 0:
                             bridge_list["8"][0].draw(P, scroll, TILE_SIZE, tiles_list)
@@ -229,7 +248,8 @@ def draw_world():
                     elif (y, x) in bridge_list["23"][1]:
                         bridge_list["23"][1][(y, x)] = tile
                         if len(bridge_list["23"][1]) > 0 and bridge_list["23"][0] is None:
-                            bridge = bridge_class.Bridge(W, H, bridge_list["23"][1], False, TILE_SIZE, 23, bridge_list["23"][1])
+                            bridge = bridge_class.Bridge(W, H, bridge_list["23"][1], False, TILE_SIZE, 23,
+                                                         bridge_list["23"][1])
                             bridge_list["23"] = bridge, bridge_list["23"][1]
                         if "23" in bridge_list and len(bridge_list["23"][1]) > 0:
                             bridge_list["23"][0].draw(P, scroll, TILE_SIZE, tiles_list)
@@ -241,7 +261,8 @@ def draw_world():
                     elif (y, x) in bridge_list["24"][1]:
                         bridge_list["24"][1][(y, x)] = tile
                         if len(bridge_list["24"][1]) > 0 and bridge_list["24"][0] is None:
-                            bridge = bridge_class.Bridge(W, H, bridge_list["24"][1], False, TILE_SIZE, 24, bridge_list["24"][1])
+                            bridge = bridge_class.Bridge(W, H, bridge_list["24"][1], False, TILE_SIZE, 24,
+                                                         bridge_list["24"][1])
                             bridge_list["24"] = bridge, bridge_list["24"][1]
                         if "24" in bridge_list and len(bridge_list["24"][1]) > 0:
                             bridge_list["24"][0].draw(P, scroll, TILE_SIZE, tiles_list)
@@ -289,7 +310,7 @@ def draw_debug_console():
 
 def load_level_data(menu=False):
     global scroll, world_data, coordinates_filled, world_coordinates, cherry_data, level, bridge_list, sign_list, \
-        current_bridge_problem, current_bridge_problem, current_sign,problem_index
+        current_bridge_problem, current_bridge_problem, current_sign, problem_index
     bridge_list = OrderedDict()
     sign_list = OrderedDict()
     current_bridge_problem = 0
@@ -310,14 +331,30 @@ def load_level_data(menu=False):
     if menu:
         loaded_level = 10
     else:
-        with open(f'main/level_data/level_code/level{level}_text.txt', 'r') as file:
+        file_path = f'main/level_data/level_code/level{level}_text.txt'
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as file:
+                lines = file.readlines()
+                final_text = ""
+                for line in lines:
+                    text = line.__str__()
+                    final_text += text + " "
+                final_text = final_text[:-2]
+                user_input.set_user_text(final_text)
+
+        with open(f'main/level_data/hint_txt/hint{loaded_level + 1}.txt', 'r') as file:
             lines = file.readlines()
-            final_text = ""
+            text = ""
             for line in lines:
-                text = line.__str__()
-                final_text += text + " "
-            final_text = final_text[:-2]
-            user_input.set_user_text(final_text)
+                text += line.__str__()
+            user_manual.set_hint_text(text)
+
+        with open(f'main/level_data/level_txt/level{loaded_level + 1}.txt', 'r') as file:
+            lines = file.readlines()
+            text = ""
+            for line in lines:
+                text += line.__str__()
+            user_manual.set_level_text(text)
     pickle_in = open(f'./main/level_data/level{loaded_level}_data', 'rb')
     world_data = pickle.load(pickle_in)
 
@@ -413,7 +450,7 @@ ROWS = 16
 MAX_COLS = 150
 TILE_SIZE = H // ROWS
 TILE_TYPES = 25
-level = 0
+level = 1
 max_level = 5
 run_tries = 0
 finished_level = False
@@ -432,6 +469,10 @@ with open("assets/txt_files/manual.txt") as file:
     for line in file.readlines():
         manual_text += line.__str__()
 
+with open("assets/txt_files/help_manual.txt") as file:
+    help_manual_text = ""
+    for line in file.readlines():
+        help_manual_text += line.__str__()
 
 # Loads the tiles for the level editor.
 tiles_list = []
@@ -447,8 +488,6 @@ for x in range(TILE_TYPES):
         img = pygame.transform.scale(img, (3 * TILE_SIZE, 3 * TILE_SIZE))
     elif x in []:
         img = pygame.transform.scale(img, (2 * TILE_SIZE, 2 * TILE_SIZE))
-    elif x == 13:
-        img = pygame.transform.scale(img, (TILE_SIZE, 0.5 * TILE_SIZE))
     else:
         img = pygame.transform.scale(img, (TILE_SIZE, TILE_SIZE))
     img.set_colorkey((0, 0, 0))
@@ -521,13 +560,14 @@ for x in range(len(animation_steps)):
         temp_img_list.append(sprite_sheet.get_image(i, 32, 32, 3, BLACK))
     player_animation_list.append(temp_img_list)
 
-pygame.display.set_icon(player_animation_list[1][0])
+icon = pygame.transform.scale(player_animation_list[0][0], (24, 24))
+pygame.display.set_icon(icon)
 
 player_run_cycle = cycle(player_animation_list[1])
 player_anim = next(player_run_cycle)
 
 start_screen = startscreen.StartScreen(pygame.time.get_ticks(), player_run_cycle, start_text, start_rect,
-                                       (W + SIDE_MARGIN, H), manual_text, "")
+                                       (W + SIDE_MARGIN, H), help_manual_text, "")
 start_screen.set_max_level_unlocked(max_level)
 start_screen.set_level_wanted(level)
 
@@ -545,22 +585,22 @@ player_start_pos = world_coordinates[14][5]
 P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
 
 input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W, user_input.get_feedback_rect())
-user_manual = usermanual.UserManual(980, 0, manual_text, "In this level, you have to reach the end!",
-                                    "Try using 'fox.moveRight()' and 'fox.jump()' if you find yourself blocked by an obstacle!\n")
+user_manual = usermanual.UserManual(980, 0, manual_text)
 
 off = pygame.image.load("assets/music_off.png").convert_alpha()
 on = pygame.image.load("assets/music_on.png").convert_alpha()
 on.set_colorkey("black")
 
-music_button = music_button_class.MusicButton(105, 170, on, off, 2, "red", "blue", music_assets)
+music_button = music_button_class.MusicButton(50, 225, on, off, 2, "red", "blue", music_assets)
 pygame.mixer.music.play()  # Uncomment for music
 pygame.mixer.music.set_volume(0.03)
 
 level_icon = pygame.image.load("assets/level_icon.png").convert_alpha()
-level_button = button.Button(5, 180, level_icon, 1.5, "lightgreen", (0, 0, 128))
+level_button = button.Button(5, 235, level_icon, 1.5, "lightgreen", (0, 0, 128))
 
 pause_icon = pygame.image.load("assets/pause_icon.png").convert_alpha()
-pause_button = button.Button(60, 180, pause_icon, 1.5, "lightgreen", (0, 0, 128))
+menu_text = font.render('Menu', True, "white")
+pause_button = button.Button(5, 180, menu_text, 1, "lightgreen", (0, 0, 128))
 
 arrow = None
 restart_text = font.render('Restart', True, "white")
@@ -581,6 +621,7 @@ while True:
             level = start_screen.get_level_wanted()
             load_level_data()
             score = 0
+            arrow = None
             run_tries = 0
             cherry_count = 0
             user_input.set_error_processed()
@@ -593,14 +634,15 @@ while True:
             input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W, user_input.get_feedback_rect())
         draw_world()
         if input_validator.isDone():
-            if input_validator.get_mode() != "Player" and input_validator.get_problem_try() is not None and not bridge_list[current_bridge_problem][0].get_show_feedback():
+            if input_validator.get_mode() != "Player" and input_validator.get_problem_try() is not None and not \
+            bridge_list[current_bridge_problem][0].get_show_feedback():
                 bridge_list[current_bridge_problem][0].set_problem_try(input_validator.get_problem_try())
                 input_validator.set_problem_try(None)
             if input_validator.get_problem_completed():
                 bridge_list[current_bridge_problem][0].validate_problem()
                 problem_index += 1
                 input_validator.set_mode("Player")
-                input_validator.say("Well done !")
+                input_validator.say("Well done ! Now reach the door to beat the level.")
                 user_input.set_mode("Player")
 
                 input_validator.set_problem_completed(False)
@@ -674,6 +716,7 @@ while True:
             # print(pygame.mouse.get_pos())
             if restart_button.draw(screen):
                 P = None
+                arrow = None
                 load_level_data()
                 score = 0
                 run_tries = 0
@@ -704,6 +747,7 @@ while True:
         start_screen.set_level_wanted(level)
         load_level_data()
         scroll = 0
+        arrow = None
         scrolling = False
         goal_scroll = 0
         P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])

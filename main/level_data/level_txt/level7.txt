@@ -1,0 +1,25 @@
+Welcome to the seventh level, this level will expand on 'arrays', see the previous level for more details. In this level you will have to solve a problem in the 'Problem' editor to proceed to the door and beat the level.
+
+Left-click on the sign to access the problem editor.
+
+When 'arrays' are already filled, they can be accessed and changed directly, without the need to append an element if what you wish is just to change an already existing element of the array.
+
+The following example will work as the index 0 already exist in the array:
+
+array = [1,2,3]
+array[0] = 5
+array == [5,2,3] -- Now 'array' contains the new element at index 0.
+
+The example below won't work and will give you an error as 0 is not defined yet, you would need to use 'append()' first:
+
+array = []
+array[0] = 1
+! Error
+
+Problem:
+
+In this level you want to move forward but there is spikes instead of ground tiles, stored in an array called 'spike', defined as the following:
+
+spike  = [True, True, True]
+
+You want to change the 'spike' array so the 'True' values become 'False', make sure to preserve the same length by modifying the elements rather than appending new ones.

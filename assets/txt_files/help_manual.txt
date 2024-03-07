@@ -5,14 +5,14 @@ Welcome to Outside The Fox. This game aims to teach you some basic programming c
 The goal of the game is to control the Fox and help it beat levels by reaching the doors. In each level, you will learn some knowledge, required to beat the level, as well as some additional knowledge helping you improve your gameplay and get a better score.
 You can always come back to earlier levels to try to improve your score. The game has nine levels.
 
-The 'User Manual' or 'Help' button is divided in three sections, the 'Manual' which is this section, the 'Level' section which tells you about the level you are currently playing, how to beat it and is going to teach you some programming knowledge required to beat the level.
+There is a 'Help' button accessible when playing the game if you need to read this in game. It is divided in three sections, the 'Manual' which contains similar information as this section, the 'Level' section which tells you about the level you are currently playing, how to beat it and is going to teach you some programming knowledge required to beat the level.
 The 'Hint' section is going to give you advanced pointers to help you beat the level when you are stuck.
 
 The end of this section has an exhaustive list of keys you can use and 'fox' functions.
 
 Editor:
 
-The 'Player Editor' on the right of the screen is a code editor where you will be able to write code to make the fox move, jump, climb and more. As you progress in the levels you will discover and learn more about it.
+The 'Player Editor', visible on the right of the screen when playing, is a code editor where you will be able to write code to make the fox move, jump, climb and more. As you progress in the levels you will discover and learn more about it.
 Use the variable 'fox' to perform 'function calls' to make the fox execute actions such as 'fox.moveRight()'. The player editor has two main buttons, the 'RUN' button which executes the code you wrote and the 'CLEAR' button which removes all the code you wrote, so you can start over.
 
 You can press any keys to add text to the editor, the 'DELETE' key removes one character at a time and press the 'ENTER' key makes you go the next line. You can go back and forth in the line you're currently editing with the 'LEFT' and 'RIGHT' keys, but you cannot go up and down between lines. You can copy and paste using 'CTRL+C' and 'CTRL+V', when copying from the editor, first select the lines you want to copy by putting them in the copying rectangle you'll draw by pressing the mouse and moving it, then press 'CTRL+C'. Make sure you selected the editor when doing that (e.g. the color of the editor is lightblue).

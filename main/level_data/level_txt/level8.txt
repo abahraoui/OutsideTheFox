@@ -1,0 +1,36 @@
+Welcome to the eighth level. This level features the final 'array' problem. See last two levels for a detailed introduction on 'arrays'.
+
+Left-click on the sign to access the problem editor.
+
+Arrays can hold elements such as strings or integers, but it could also hold arrays themselves:
+
+arr = [ [], [], [] ]
+
+In the example above, 'arr' is an array holding three empty arrays. It is commonly refered as a 2D-array for its 2 dimensional aspect, it is the programming representation of a matrix.
+
+Think about it like a grid, where the first index represents the rows and the second represents the columns:
+
+   "A"  |  "B" |  "C"
+    -------+------+--------
+   "D"  |  "E" | "F"
+    -------+------+--------
+   "G"  |  "H" | "I"
+
+The above grid represents an array containing 3 arrays (3 rows) and each array contains 3 elements, the above example "A" is contained at 'arr[0][0]' and "B" is contained at 'arr[0][1]'.
+
+The internal array can be accessed by adding another pair of brackets, and you could append elements to the first internal empty array, like in the following:
+
+arr = [ [], [], [] ]
+arr[0].append("This is 0,0")
+arr[0][0] -- "This is 0,0"
+arr == [ ["This is 0,0"], [], [] ] -- Now 'arr' contains the new element at index '[0][0]'.
+
+Problem:
+
+You have a broken ladder you need to fix to reach the door. You only have 3 ladder tiles contained in the 'ladder' 2D-array in the following initial position:
+
+ladder = [[0,0,0,0],
+                 [0,0,0,0],
+                 [0,1,1,1]]
+
+There is 3 rows and 4 columns. Where there is a ladder tile, there is a 1 in the array. Make sure to only use 3 ladder tiles and rearrange them in a vertical way.

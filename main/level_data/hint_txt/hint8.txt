@@ -1,0 +1,6 @@
+Try to modify the 'ladder' array current ladder tiles, where there is a 1, to 0 first, so you don't use more than 3 ladder tiles. Think about where you want to put the ladder tiles, try and look at the visual feedback to understand where your ladders are wrongly placed.
+
+Remember to use double array accessing:
+
+ladder[0][0] = 1
+ladder[0][1] = 0

@@ -1,0 +1,1 @@
+Think about how to use 'fox.crouch()' and 'fox.moveRight()' to reach the door.

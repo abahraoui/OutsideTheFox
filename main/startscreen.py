@@ -17,8 +17,10 @@ def make_button(text, W, H, offset):
                          H / 2 - button_surface.get_height() + offset, button_surface, 1,
                          "lightgreen", "empty", rect)
 
+
 def roundup(x):
     return int(math.ceil(x / 100.0)) * 100
+
 
 class StartScreen:
 
@@ -51,8 +53,9 @@ class StartScreen:
         self.help_surface = []
         self.end_level_text = []
 
-        self.limit = self.menu_rect.bottom - 200
-        usermanual.parse_text(help_text, self.help_surface, pygame.font.SysFont("arialblack", 16), self.limit, self.menu_rect.width)
+        self.limit = self.menu_rect.bottom - 400
+        usermanual.parse_text(help_text, self.help_surface, pygame.font.SysFont("arialblack", 16), self.limit,
+                              self.menu_rect.width)
         usermanual.parse_text(end_text, self.end_level_text, self.text_font, self.limit, self.menu_rect.width)
 
         self.play_button = make_button("Play", self.W, self.H, -200)
@@ -161,6 +164,17 @@ class StartScreen:
                 self.can_back = False
                 self.state = 'M'
 
+            if self.previousPageButton.draw(self.screen):
+                if self.page == 1:
+                    self.page = self.help_surface[-1][1]
+                else:
+                    self.page -= 1
+            if self.nextPageButton.draw(self.screen):
+                if self.page == self.help_surface[-1][1]:
+                    self.page = 1
+                else:
+                    self.page += 1
+
             start_y = self.menu_rect.top + 10
 
             text_surfaces = [x for x in self.help_surface if x[1] == self.page]
@@ -199,7 +213,8 @@ class StartScreen:
         if self.state == 'L':
             text_surface = self.sub_title_font.render("Select a level", True, "navy")
             self.screen.blit(text_surface, (
-            self.menu_rect.left + self.menu_rect.width / 2 - text_surface.get_width() / 2, self.menu_rect.top - 100))
+                self.menu_rect.left + self.menu_rect.width / 2 - text_surface.get_width() / 2,
+                self.menu_rect.top - 100))
             if not self.started:
                 text_surface = self.sub_title_font.render("To try out levels,", True, "navy")
                 self.screen.blit(text_surface, (
@@ -240,7 +255,7 @@ class StartScreen:
                 buttons.append(level_button)
 
             level_text_surfaces = [x for x in text_surfaces if
-                             self.level_page * 3 - 4 < text_surfaces.index(x) < self.level_page * 3]
+                                   self.level_page * 3 - 4 < text_surfaces.index(x) < self.level_page * 3]
             for i in range(len(level_text_surfaces)):
                 rect = pygame.Rect(self.menu_rect.left + 5, self.menu_rect.top + 5 + 145 * i, self.menu_rect.width - 10,
                                    120)
@@ -265,12 +280,17 @@ class StartScreen:
     def get_level_wanted(self):
         return self.level_wanted
 
+    def get_state(self):
+        return self.state
+
+    def get_started(self):
+        return self.started
+
     def set_paused(self):
         self.paused = True
 
     def set_end_text(self, text):
         usermanual.parse_text(text, self.end_level_text, self.text_font, self.limit, self.menu_rect.width)
-
 
     def set_level_wanted(self, value):
         self.level_wanted = value
@@ -278,9 +298,27 @@ class StartScreen:
     def set_state(self, state):
         self.state = state
 
-    def get_started(self):
-        return self.started
-
     def set_max_level_unlocked(self, value):
         self.level_page = 1
         self.max_level = value
+
+    def change_page(self, value):
+        if self.state == "H":
+            if value == "L":
+                if self.page == 1:
+                    self.page = self.help_surface[-1][1]
+                else:
+                    self.page -= 1
+            elif value == "R":
+                if self.page == self.help_surface[-1][1]:
+                    self.page = 1
+                else:
+                    self.page += 1
+        if self.state == "L":
+            if value == "R":
+                if self.level_page * 3 < self.max_level:
+                    self.level_page += 1
+            elif value == "L":
+                if self.level_page > 1:
+                    self.level_page -= 1
+

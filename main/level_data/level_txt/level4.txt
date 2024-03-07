@@ -1,0 +1,33 @@
+Welcome to the fourth level. The goal of this level is to learn to make the 'fox' climb up and down, passing parameters to functions and making first steps in debugging.
+
+The 'fox' can 'say()' sentences you wish it to say to help you debug things. In programming, you often need to use the function 'print()' to print values in a console. You could use that here, but you would need to start the game from a console to see the output.
+
+Fortunately we have 'fox.say()'. The function 'say()' takes one parameter which is a string, a piece of text like:
+
+"This is a string" -- It starts with " and ends with ".
+
+It can be assigned to a variable:
+a_string = "This is a string"
+
+To pass it in the function 'say()' you would do:
+fox.say("This is a string")
+
+Or if it's assigned to a variable:
+fox.say(a_string)
+
+Try it a bit to find out what the fox says.
+
+The fox functions 'climbUp()' and 'climbDown()' can be used  to climb up and down a ladder. Use them to beat this level.
+
+And to know whether you could climb or not at some tile, you could debug your code while running it by adding this special line:
+
+fox.say("canClimb")
+
+To which the fox will answer 'True' or 'False', this can be used while running code to know about the state of the fox in some tile.
+
+There is a few other special strings you can pass to the 'say' function that are similar, such as:
+-fox.say("canMoveRight")
+-fox.say("canMoveLeft")
+-fox.say("canJump")
+
+You cannot pass in other kind of objects, only strings as the 'say()' function doesn't work like the in-built function 'print()'.

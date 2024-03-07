@@ -1,0 +1,55 @@
+!!! Loop disclaimer:
+Loops and especially 'while' loops can be tricky to write and when not set up correctly, the condition will never stop being 'True'. This will lead to an 'infinite loop' that will never stop and will make the game crash.
+In that case you need to exit the game yourself by clicking on the arrow at the top right of the game window or shutting it down from your task manager.
+Be careful when writing loops, and please do not make use of the 'canClimb()', 'canJump()', 'canMoveRight()', 'canMoveLeft()' functions inside the loops or as a loop condition as they were not designed for it and will produce an infinite loop.
+
+Welcome to the fifth level. The scoring system takes into account the number of times you run the code and writing the same few lines in the editor multiple times can be time-consuming. To improve your scoring and code effectiveness, you would need a concept called 'Loops' which run the same sequence for a number of time you choose, such as below:
+
+for i in range(5):
+   fox.jump()
+   fox.moveRight()
+
+In this example, the fox will first jump then move to right and repeat this sequence of actions 5 times. This is called a 'for' loop and in Python, it makes use of the in-built function 'range()' which takes an integer parameter, here '5' as the number of times you want the code inside the 'for' loop to run.
+If you remember from previous levels, the ':' at the end of the 'if' statement, is also needed at the end of 'for' statement, as well as the indentation inside the 'for' loop block, required for correct syntax.
+
+Datatypes are constructs to store information in your code. So far we've seen:
+- strings: "This is a string"
+- integers: 5 | 6 | 7 -- which are whole numbers.
+
+Some usages of datatypes include variable assignment 'a = 5' or being passed in as a function parameter 'fox.say("hello")', more on datatypes later.
+
+Another kind of loop is the 'while' loop which repeats the action as long as the 'CONDITION' evaluates to 'True' (do not write 'while True' as this in an infinite loop and will make the game crash, more on that later):
+
+while CONDITION:
+    print("Hi")
+
+In the context of the game, we could compare integers and change them inside the loop, like:
+
+step = 0
+while step < 4:
+   fox.moveRight()
+   step = step + 1
+
+In this example, the 'while' loop helps us repeat the 'fox.moveRight()' action 4 times, by writing 'fox.moveRight()' only once. The 'step' variable starts at 0 and is increased by 1 at each 'iteration', which is what running the sequence from the start is usually called. While 'step' is less than 4, it executes what's inside the 'while' loop.
+
+Try to use loops to get a better score, when you want to shorten your code from repetitive long statements, like in the following example.
+
+from:
+
+fox.jump()
+fox.moveRight()
+fox.jump()
+fox.moveRight()
+
+to:
+
+for i in range(2):
+    fox.jump()
+    fox.moveRight()
+
+!!! Loop disclaimer:
+Loops and especially 'while' loops can be tricky to write and when not set up correctly, the condition will never stop being 'True'. This will lead to an 'infinite loop' that will never stop and will make the game crash.
+In that case you need to exit the game yourself by clicking on the arrow at the top right of the game window or shutting it down from your task manager.
+Be careful when writing loops, and please do not make use of the 'canClimb()', 'canJump()', 'canMoveRight()', 'canMoveLeft()' functions inside the loops or as a loop condition as they were not designed for it and will produce an infinite loop.
+
+

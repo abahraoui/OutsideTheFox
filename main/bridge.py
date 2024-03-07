@@ -39,13 +39,9 @@ class Bridge:
         elif self.id == 8:
             self.problem = [False] * self.size
             min = (0, 0)
-            print(self.tile_list)
             for tile in self.tile_list:
-                print(tile)
                 if tile[0] > min[0]:
-                    print(tile)
                     min = tile[0], tile[1]
-                    print(min)
             self.starting_pos = min[0] + 1, min[1] + 1
         elif self.id == 24:
             self.problem = [True] * self.size

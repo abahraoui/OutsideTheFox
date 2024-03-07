@@ -25,7 +25,7 @@ def parse_text(text_to_parse, surface_to_append, font, limit, active_W):
     for i in range(len(text_to_parse)):
         if text_to_parse[i] == "\n":
             page += check_limit_y(limit, text_surface)
-            if i > 0 and text_to_parse[i-1] == "\n":
+            if i > 0 and text_to_parse[i - 1] == "\n":
                 text_surface = font.render(test_text, True, (255, 255, 255))
                 surface_to_append.append((text_surface, page))
             else:
@@ -36,10 +36,24 @@ def parse_text(text_to_parse, surface_to_append, font, limit, active_W):
         test_text += text_to_parse[i]
         text_surface = font.render(test_text, True, (255, 255, 255))
         if text_surface.get_width() >= active_W - 60:
+            if i + 1 < len(text_to_parse) and (text_to_parse[i + 1] != " " or text_to_parse[i + 1] != "\n"):
+                j = len(test_text) - 1
+                count = 0
+                offset_text = ""
+                while test_text[j] != " ":
+                    count += 1
+                    offset_text += test_text[-1]
+                    test_text = test_text[:-1]
+                    j = len(test_text) - 1
+                i -= count
+                text_surface = font.render(test_text, True, (255, 255, 255))
+                test_text = offset_text[::-1]
+            else:
+                test_text = ""
             page += check_limit_y(limit, text_surface)
             surface_to_append.append((text_surface, page))
             text_list.append(test_text)
-            test_text = ""
+
         if i == len(text_to_parse) - 1:
             page += check_limit_y(limit, text_surface)
             surface_to_append.append((text_surface, page))
@@ -48,13 +62,13 @@ def parse_text(text_to_parse, surface_to_append, font, limit, active_W):
 
 class UserManual:
 
-    def __init__(self, x, y, user_manual_text, level_text, hint_text):
+    def __init__(self, x, y, user_manual_text):
         self.x = x
         self.y = y
         self.active = False
         self.user_manual_text = user_manual_text
-        self.level_text = level_text
-        self.hint_text = hint_text
+        self.level_text = ""
+        self.hint_text = ""
         self.text = self.user_manual_text
         self.state = 'M'
         self.active_W = 400
@@ -62,13 +76,13 @@ class UserManual:
         self.active_rect = pygame.Rect(self.x - 250, 25, self.active_W, self.y + 600)
         self.rect = self.inactive_rect
         self.text_font = pygame.font.SysFont('arialblack', 16)
-        limit = self.active_rect.bottom - 215
+        self.limit = self.active_rect.bottom - 215
         self.manual_text_surface = []
-        parse_text(self.user_manual_text, self.manual_text_surface, self.text_font, limit, self.active_W)
+        parse_text(self.user_manual_text, self.manual_text_surface, self.text_font, self.limit, self.active_W)
         self.level_text_surface = []
-        parse_text(self.level_text, self.level_text_surface, self.text_font, limit, self.active_W)
+        parse_text(self.level_text, self.level_text_surface, self.text_font, self.limit, self.active_W)
         self.hint_text_surface = []
-        parse_text(self.hint_text, self.hint_text_surface, self.text_font, limit, self.active_W)
+        parse_text(self.hint_text, self.hint_text_surface, self.text_font, self.limit, self.active_W)
 
         self.text_surface = self.manual_text_surface
         self.page = 1
@@ -160,7 +174,7 @@ class UserManual:
                                                                                        "white")
 
             screen.blit(page_surface, (
-            self.active_rect.left + self.active_W / 2 - page_surface.get_width() / 2, self.active_rect.bottom - 25))
+                self.active_rect.left + self.active_W / 2 - page_surface.get_width() / 2, self.active_rect.bottom - 25))
 
             for i in range(len(self.tabs)):
 
@@ -185,8 +199,30 @@ class UserManual:
     def flip_active(self):
         self.active = not self.active
 
+    def set_level_text(self, text):
+        self.level_text = text
+        self.level_text_surface = []
+        parse_text(self.level_text, self.level_text_surface, self.text_font, self.limit, self.active_W)
+
+    def set_hint_text(self, text):
+        self.hint_text = text
+        self.hint_text_surface = []
+        parse_text(self.hint_text, self.hint_text_surface, self.text_font, self.limit, self.active_W)
+
     def get_active(self):
         return self.active
+
+    def change_page(self, value):
+        if value == "R":
+            if self.page == self.text_surface[-1][1]:
+                self.page = 1
+            else:
+                self.page += 1
+        elif value == "L":
+            if self.page == 1:
+                self.page = self.text_surface[-1][1]
+            else:
+                self.page -= 1
 
     def mouse_colliding(self, pos):
         return self.rect.collidepoint(pos)

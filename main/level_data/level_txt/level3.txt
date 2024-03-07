@@ -1,0 +1,35 @@
+Welcome to the third level. The goal of this level is to learn about another fox function 'crouch()', conditionals and boolean values.
+
+In this level, you are blocked to the right but only on the block next to the upper body of the fox. You could move to the right if you crouched. You can un-crouch by jumping.
+Here you could use a condition to inform your code what to do in this situation. Using an 'if-else' statement:
+
+if CONDITION:
+   statement_if_true
+else:
+   statement_if_false
+
+The 'CONDITION' is a logical statement which evaluates to either 'True' or 'False'. It could compare if two objects are equals like:
+
+if 1 == 2:
+  print("They are the same.")
+else:
+  print("They are not the same.")
+
+In the condition '1 == 1', '==' evaluates whether the left part is equal to the right part. In this case it will be evaluated as 'False' because 1 and 2 are not equal.
+In 'if-else' statements, don't forget to put ':' at the end, otherwise the Syntax is wrong, and you will get an Error.
+Inside your 'if-else' blocks, keep the same indentation for each statement, if your first statement inside an 'if' statement starts after two 'spaces', such as in:
+
+if 1 == 2:
+  print("They are the same.")
+  fox.jump()
+
+Then the next statement after 'print("They are the same.")', here 'fox.jump()', should also have two 'spaces' at the beginning of the line. If you write code after your 'if-else' statement, start at the same indent (number of spaces) as the 'if-else' itself.
+
+The 'fox' has a function to know whether it is blocked right called 'canMoveRight()'. It returns 'True' if the 'fox' is not blocked to the right and 'False' otherwise. You could use that with 'crouch()' to indicate to your program whether you should crouch or not:
+
+if fox.canMoveRight():
+  statement_if_true
+else:
+   statement_if_false
+
+The fox function 'jump()' can be used to un-crouch the fox.

@@ -1,0 +1,42 @@
+Welcome to the sixth level, in this level you will have to solve a problem in the 'Problem' editor to proceed to the door and beat the level.
+
+Left-click on the sign to access the problem editor.
+
+In previous levels, you've seen datatypes, which are programming objects made to store some kind of information, such as:
+- strings: "This is a string"
+- integers: 5 | 6 | 7 -- which are whole numbers.
+
+Another useful kind of datatype is 'lists' or also called 'arrays'. It is useful to store elements like strings or integers or even more complex objects like cherries in a game level.
+Here's what an empty 'array' assignment looks like:
+
+an_empty_array = []
+
+It starts with a square bracket '[' and ends with a closing one ']'. Arrays can store other objects, like strings or integers:
+
+an_array = ["a", 5, "Hello", 2]
+
+In the above, when defining a non-empty array, put ',' commas after each element but the last one.
+These items stored in the array can be stored using 'indexes', which are whole numbers that start from 0 , so the first element starts at 0 rather than 1 and the last element of the array is the length of it minus 1.
+This is why, if you've noticed,the reason the levels start at 0 rather than 1 and the first level is actually level zero.
+To access items in the array, you put the array name followed by square brackets and an index (whole number) inside the brackets, such as:
+
+an_array[0] -- The array is being accessed at index 0 and in this case will return "a" as defined in the previous example above.
+
+an_array[0] --> contains "a"
+an_array[3] --> contains 2
+
+As an_array is of length 4, the last element is 3. If the array is empty '[]', to add element you need to use the function 'append(element)', it takes one parameter which is the element you are going to append or add to the end of array:
+
+an_array = []
+an_array.append("b")
+an_array.append(2)
+
+After that, an_array is gonna be ["b", 2].
+
+Problem:
+
+In this level you have an empty bridge you want to build, so you can walk on it and proceed to beat the level, defined as followed:
+
+bridge = []
+
+You need to perform operations on 'bridge' to fill it with the string "wood". Try to make it so the length of bridge is the same as the number of empty tiles on you want to fill with your bridge.
