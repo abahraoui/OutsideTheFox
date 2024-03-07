@@ -145,7 +145,7 @@ class StartScreen:
             if self.levels_button.draw(self.screen):
                 self.can_level = True
             if self.can_level and self.levels_button.is_finished():
-                self.set_max_level_unlocked(10)
+                self.set_max_level_unlocked(9)
                 self.state = 'L'
                 self.can_level = False
 
@@ -242,8 +242,9 @@ class StartScreen:
             thumbnails = []
             text_surfaces = []
             buttons = []
-            for i in range(self.max_level + 1):
-                level_thumbnail = pygame.image.load("main/level_data/level_thumbnail/img.png").convert_alpha()
+            for i in range(self.max_level):
+                path = f"main/level_data/level_thumbnail/{i}.PNG"
+                level_thumbnail = pygame.image.load(path).convert_alpha()
                 level_thumbnail = pygame.transform.scale(level_thumbnail, (int(1280 / 6), int(720 / 6)))
                 text_surface = self.text_font.render(f"Level: {i} | Title: | Best score: ", True, "white")
                 rect = pygame.Rect(self.menu_rect.left + 5, self.menu_rect.top + 5 + 145 * i, self.menu_rect.width - 10,
@@ -265,7 +266,7 @@ class StartScreen:
                     if not self.started:
                         self.started = True
                 pygame.draw.rect(self.screen, "crimson", rect)
-                self.screen.blit(thumbnails[0], rect)
+                self.screen.blit(thumbnails[text_surfaces.index(level_text_surfaces[i])], rect)
                 self.screen.blit(level_text_surfaces[i], (rect.left + 250, rect.top + rect.height / 2))
             if self.nextPageButton.draw(self.screen):
                 if text_surfaces.index(level_text_surfaces[-1]) < self.max_level:

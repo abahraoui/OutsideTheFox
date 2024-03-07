@@ -449,7 +449,7 @@ reset_scroll = False
 ROWS = 16
 MAX_COLS = 150
 TILE_SIZE = H // ROWS
-TILE_TYPES = 25
+TILE_TYPES = 26
 level = 1
 max_level = 5
 run_tries = 0
@@ -480,7 +480,7 @@ for x in range(TILE_TYPES):
     img = pygame.image.load(f'assets/tile/{x}.png').convert_alpha()
     if x == 14:
         img = pygame.transform.scale(img, (TILE_SIZE, 2 * TILE_SIZE))
-    elif x in [17]:
+    elif x in [17, 25]:
         img = pygame.transform.scale(img, (5 * TILE_SIZE, 5 * TILE_SIZE))
     elif x in [18, 15, 16]:
         img = pygame.transform.scale(img, (4 * TILE_SIZE, 4 * TILE_SIZE))
@@ -646,7 +646,7 @@ while True:
                 user_input.set_mode("Player")
 
                 input_validator.set_problem_completed(False)
-            draw_grid()
+            # draw_grid()
             if arrow is not None:
                 arrow.draw()
         else:
