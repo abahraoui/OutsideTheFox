@@ -1,1 +1,7 @@
-In this level, to get a better score, you could make use of a 'for' loop with the appropriate sequence of fox functions. Try to find a pattern in the level that you could repeat with a sequence of fox functions inside the loop.
+In this level, to get a better score, you could make use of a 'for' loop with the appropriate sequence of fox functions.
+
+Try to find a pattern in the level that you could repeat with a sequence of fox functions inside the loop.
+
+fox functions needed to beat the level:
+- 'moveRight()'
+- 'jump()'

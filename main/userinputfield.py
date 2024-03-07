@@ -1,5 +1,5 @@
 import pygame
-import button
+from main import button
 
 
 class UserInputField:

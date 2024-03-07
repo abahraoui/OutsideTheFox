@@ -4,3 +4,7 @@ Remember to use double array accessing:
 
 ladder[0][0] = 1
 ladder[0][1] = 0
+
+fox functions needed to beat the level:
+- 'moveRight()'
+- 'climbUp()'

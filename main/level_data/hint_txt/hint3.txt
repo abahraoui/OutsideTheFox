@@ -1,1 +1,5 @@
 Think about how to use 'fox.crouch()' and 'fox.moveRight()' to reach the door.
+
+fox functions needed to beat the level:
+- 'crouch()'
+- 'moveRight()'

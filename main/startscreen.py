@@ -2,8 +2,8 @@ import math
 import sys
 
 import pygame.display
-import button
-import usermanual
+from main import button
+from main import usermanual
 
 
 def make_button(text, W, H, offset):
@@ -51,12 +51,15 @@ class StartScreen:
         self.paused = True
         self.text_font = pygame.font.Font('assets/joystix monospace.otf', 16)
         self.help_surface = []
-        self.end_level_text = []
+        self.end_level_surface = []
+        self.level_titles = ["Function Calls", "Function Chaining and Comments", "Conditionals",
+                             "Function Parameters and Debugging", "Loops", "Datatypes and Arrays",
+                             "Array Accessing and Modifying", "2D-Arrays", "Final Assessment"]
 
         self.limit = self.menu_rect.bottom - 400
         usermanual.parse_text(help_text, self.help_surface, pygame.font.SysFont("arialblack", 16), self.limit,
                               self.menu_rect.width)
-        usermanual.parse_text(end_text, self.end_level_text, self.text_font, self.limit, self.menu_rect.width)
+        usermanual.parse_text(end_text, self.end_level_surface, self.text_font, self.limit, self.menu_rect.width)
 
         self.play_button = make_button("Play", self.W, self.H, -200)
         self.help_button = make_button("Help", self.W, self.H, 100)
@@ -199,11 +202,11 @@ class StartScreen:
 
             start_y = self.menu_rect.top + 10
 
-            text_surfaces = [x for x in self.end_level_text if x[1] == self.page]
+            text_surfaces = [x for x in self.end_level_surface if x[1] == self.page]
             for i in range(len(text_surfaces)):
                 current_surface = text_surfaces[i]
                 self.screen.blit(current_surface[0], (self.menu_rect.left + 30, start_y + 25 * (i + 1)))
-                if current_surface == self.end_level_text[-1]:
+                if current_surface == self.end_level_surface[-1]:
                     text_surface = pygame.font.Font('assets/joystix monospace.otf', 16).render("End of file", True,
                                                                                                "crimson")
                     self.screen.blit(text_surface,
@@ -241,22 +244,31 @@ class StartScreen:
 
             thumbnails = []
             text_surfaces = []
+            score_surfaces = []
             buttons = []
-            for i in range(self.max_level):
-                path = f"main/level_data/level_thumbnail/{i}.PNG"
-                level_thumbnail = pygame.image.load(path).convert_alpha()
-                level_thumbnail = pygame.transform.scale(level_thumbnail, (int(1280 / 6), int(720 / 6)))
-                text_surface = self.text_font.render(f"Level: {i} | Title: | Best score: ", True, "white")
-                rect = pygame.Rect(self.menu_rect.left + 5, self.menu_rect.top + 5 + 145 * i, self.menu_rect.width - 10,
-                                   123)
-                level_button = button.Button(self.menu_rect.left + 5, self.menu_rect.top + 5 + 145 * i, None, 1,
-                                             "lightgreen", "empty", rect)
-                thumbnails.append(level_thumbnail)
-                text_surfaces.append(text_surface)
-                buttons.append(level_button)
+            for i in range(self.max_level + 1):
+                if i < 9:
+                    path = f"main/level_data/level_thumbnail/{i}.PNG"
+                    level_thumbnail = pygame.image.load(path).convert_alpha()
+                    level_thumbnail = pygame.transform.scale(level_thumbnail, (int(1280 / 6), int(720 / 6)))
+                    text_surface = self.text_font.render(f"Level: {i} | Title: {self.level_titles[i]}", True, "white")
+                    with open(f'main/level_data/level_score/level{i}_score.txt', 'r') as file:
+                        best_score = int(file.readline().__str__())
+                    score_surface = self.text_font.render(f"Best score: {best_score}", True, "white")
+
+                    rect = pygame.Rect(self.menu_rect.left + 5, self.menu_rect.top + 5 + 145 * i, self.menu_rect.width - 10,
+                                       123)
+                    level_button = button.Button(self.menu_rect.left + 5, self.menu_rect.top + 5 + 145 * i, None, 1,
+                                                 "lightgreen", "empty", rect)
+                    thumbnails.append(level_thumbnail)
+                    text_surfaces.append(text_surface)
+                    score_surfaces.append(score_surface)
+                    buttons.append(level_button)
 
             level_text_surfaces = [x for x in text_surfaces if
                                    self.level_page * 3 - 4 < text_surfaces.index(x) < self.level_page * 3]
+            best_score_surfaces = [x for x in score_surfaces if
+                                   self.level_page * 3 - 4 < score_surfaces.index(x) < self.level_page * 3]
             for i in range(len(level_text_surfaces)):
                 rect = pygame.Rect(self.menu_rect.left + 5, self.menu_rect.top + 5 + 145 * i, self.menu_rect.width - 10,
                                    120)
@@ -267,7 +279,9 @@ class StartScreen:
                         self.started = True
                 pygame.draw.rect(self.screen, "crimson", rect)
                 self.screen.blit(thumbnails[text_surfaces.index(level_text_surfaces[i])], rect)
-                self.screen.blit(level_text_surfaces[i], (rect.left + 250, rect.top + rect.height / 2))
+                self.screen.blit(level_text_surfaces[i], (rect.left + 250, rect.top + rect.height / 2 - 50))
+                self.screen.blit(best_score_surfaces[i], (rect.left + 250, rect.top + rect.height / 2))
+
             if self.nextPageButton.draw(self.screen):
                 if text_surfaces.index(level_text_surfaces[-1]) < self.max_level:
                     self.level_page += 1
@@ -291,7 +305,8 @@ class StartScreen:
         self.paused = True
 
     def set_end_text(self, text):
-        usermanual.parse_text(text, self.end_level_text, self.text_font, self.limit, self.menu_rect.width)
+        self.end_level_surface = []
+        usermanual.parse_text(text, self.end_level_surface, self.text_font, self.limit, self.menu_rect.width)
 
     def set_level_wanted(self, value):
         self.level_wanted = value

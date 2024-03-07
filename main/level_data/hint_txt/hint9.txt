@@ -1,3 +1,10 @@
 There is no hint for this level as it requires all the previous learnt knowledge, if you don't understand something, reminisce on what you've accomplished earlier or the teaching material of previous levels or the manual section.
 
 Good luck !
+
+fox functions needed to fully beat the level:
+- 'moveRight()'
+- 'climbUp()'
+- 'jump()'
+- 'moveLeft()'
+- 'crouch()'

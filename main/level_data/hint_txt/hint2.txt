@@ -1,1 +1,5 @@
 Try to write a 'fox.jump()' function before a left right movement call.
+
+fox functions needed to beat the level:
+- 'moveRight()'
+- 'jump()'

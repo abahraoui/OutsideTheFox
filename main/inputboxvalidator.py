@@ -1,10 +1,10 @@
 import ast
 import sys
-import usermanual
+from main import usermanual
 
-import fox_class
+from main import fox_class
 import pygame
-import user_execution_visitor
+from main import user_execution_visitor
 
 
 def execute_code(obj, allowed):

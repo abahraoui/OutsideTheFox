@@ -1,2 +1,7 @@
 'fox.climbUp()' can be used when the fox is on a valid ladder tile.
 'fox.climbDown()' can be used when the fox is falling into a ladder.
+
+fox functions needed to beat the level:
+- 'climbUp()'
+- 'climbDown()'
+- 'moveRight()'

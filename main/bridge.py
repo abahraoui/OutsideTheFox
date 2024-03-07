@@ -1,5 +1,5 @@
 import pygame
-import tile as tile_class
+from main import tile as tile_class
 
 
 class Bridge:

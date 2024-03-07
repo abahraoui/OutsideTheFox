@@ -1,3 +1,6 @@
 Try to write multiple 'fox.moveRight()' statements or put them in a loop if you already know about loops.
 
 Don't forget to use CTRL+C and CTRL+V to save some time.
+
+fox functions needed to beat the level:
+- 'moveRight()'

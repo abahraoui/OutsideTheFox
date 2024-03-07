@@ -7,6 +7,8 @@ import pickle
 pygame.init()
 
 
+# This module was greatly inspired by 'Coding with Russ' at https://github.com/russs123/LevelEditor
+
 # Event handler.
 def events():
     global scroll_left
