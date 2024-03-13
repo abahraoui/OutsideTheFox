@@ -1,14 +1,13 @@
 import math
 
 import pygame
-from pygame.locals import *
-
 
 class Player(pygame.sprite.Sprite):
 
     def __init__(self, velocity, maxJumpRange, animationList, screenSize, tileSize):
         pygame.sprite.Sprite.__init__(self)
-
+        self.y = 0
+        self.x = 0
         self.W = screenSize[0]
         self.H = screenSize[1]
         self.velocity = velocity
@@ -92,33 +91,6 @@ class Player(pygame.sprite.Sprite):
 
     def notMoving(self):
         self.moving = False
-
-    def keys(self):
-        keys = pygame.key.get_pressed()
-
-        # if keys[K_q]:
-        #     if not self.blockedLeft:
-        #         self.xVelocity = -self.velocity
-        #     self.moving = True
-        #     self.flipAnim('L')
-        #     if self.action == 1:
-        #         self.playRunSound()
-        # elif keys[K_d]:
-        #     if not self.blockedRight:
-        #         self.xVelocity = self.velocity
-        #     self.moving = True
-        #     self.flipAnim('R')
-        #     if self.action == 1:
-        #         self.playRunSound()
-        # else:
-        #     self.xVelocity = 0
-        #     # self.notMoving()
-        #     # self.stopRunSound()
-        # if keys[K_SPACE] and not self.jumping and not self.falling:
-        #     self.jumpSound()
-        #     self.jumping = True
-        #     self.freeJump = True
-        #     self.jumpCounter = 0
 
     def move(self):
         if 149 < self.x + self.xVelocity:
@@ -229,8 +201,8 @@ class Player(pygame.sprite.Sprite):
         for coll in self.collider:
             coll_x = self.collider[coll][0]
             coll_y = self.collider[coll][1]
-            # pygame.draw.rect(pygame.display.get_surface(), "lightblue", # Debug collider
-            #                   pygame.Rect(coll_x, coll_y, self.tileSize, self.tileSize), 3)
+            # pygame.draw.rect(pygame.display.get_surface(), "lightblue",
+            #                   pygame.Rect(coll_x, coll_y, self.tileSize, self.tileSize), 3) # Debug collider
 
             if coll_y > y and (coll_x <= x + width / 2 <= coll_x + self.tileSize):
                 below = True
@@ -352,7 +324,6 @@ class Player(pygame.sprite.Sprite):
             self.reachedRightBoundary = False
 
     def do(self):
-        self.keys()
         self.move()
         self.process_collider()
         self.draw()

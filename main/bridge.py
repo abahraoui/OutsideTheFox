@@ -118,7 +118,7 @@ class Bridge:
                     offset -= 1
                 t = tile_class.Tile(x * TILE_SIZE - scroll, y * TILE_SIZE, (self.W, self.H), tiles_list[tile], tile)
                 t.draw()
-                if player and t.colliderect(player):
+                if player and t.collide_rect(player):
                     player.is_colliding((t.x, t.y), key)
                 elif player:
                     player.not_colliding(key)
@@ -143,7 +143,7 @@ class Bridge:
                 t = tile_class.Tile(x * TILE_SIZE - scroll, y * TILE_SIZE, (self.W, self.H), tiles_list[tile], tile)
                 t.draw()
                 if self.completed:
-                    if player and t.colliderect(player):
+                    if player and t.collide_rect(player):
                         player.add_ladder((y, x))
                     else:
                         player.remove_ladder((y, x))
@@ -159,10 +159,10 @@ class Bridge:
                 t = tile_class.Tile(x * TILE_SIZE - scroll, y * TILE_SIZE, (self.W, self.H), tiles_list[tile], tile)
                 t.draw()
                 if not self.completed:
-                    if player and t.colliderect(player):
+                    if player and t.collide_rect(player):
                         player.set_finished()
                 elif self.completed:
-                    if player and t.colliderect(player):
+                    if player and t.collide_rect(player):
                         player.is_colliding((t.x, t.y), key)
                     elif player:
                         player.not_colliding(key)

@@ -1,6 +1,6 @@
 Welcome to the fourth level. The goal of this level is to learn to make the 'fox' climb up and down, passing parameters to functions and making first steps in debugging.
 
-The 'fox' can 'say()' sentences you wish it to say to help you debug things. In programming, you often need to use the function 'print()' to print values in a console. You could use that here, but you would need to start the game from a console to see the output.
+The 'fox' can 'say()' sentences you wish it to say to help you debug things. In programming, you often need to use the function 'print()' to print values in a terminal.
 
 Fortunately we have 'fox.say()'. The function 'say()' takes one parameter which is a string, a piece of text like:
 

@@ -38,6 +38,7 @@ class InputBoxValidator:
         self.problem_completed = False
         self.problem_try = None
         self.problem_size = 0
+        self.busy = False
 
     def set_text(self, text_to_validate):
         self.text_list = text_to_validate
@@ -183,7 +184,7 @@ class InputBoxValidator:
             self.show_feedback = False
 
     def process_queue(self, scroll):
-        if pygame.time.get_ticks() > self.lastQueueCooldown + 750:
+        if not self.busy:
             match self.queue[0]:
                 case 0:
                     if not self.player.get_lerping() and not self.player.get_blocked_right() and not self.player.jumping and self.player.finishedCrouching:
@@ -289,6 +290,9 @@ class InputBoxValidator:
             return True
         else:
             return False
+
+    def set_busy(self, value):
+        self.busy = value
 
     def set_problem_size(self, value):
         self.problem_size = value

@@ -89,6 +89,10 @@ def events():
                         user_input.increment_offset()
                     elif event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT:
                         user_input.decrement_offset()
+                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_UP:
+                        user_input.increment_offset_up()
+                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN:
+                        user_input.decrement_offset_down()
                     else:
                         user_input.add_text(event.unicode)
                 elif event.type == pygame.MOUSEBUTTONDOWN and not user_input.is_copy_rect() and user_input.get_active():
@@ -145,8 +149,7 @@ def draw_world():
 
                 if tile == 14:
                     t.draw()
-                    # pygame.draw.rect(screen, "blue", (x * TILE_SIZE - scroll, y*TILE_SIZE, TILE_SIZE, TILE_SIZE), 3)
-                    if P and t.colliderect(P):
+                    if P and t.collide_rect(P):
                         finished_level = True
                         P.set_finished()
                 elif tile == 21:
@@ -250,14 +253,14 @@ def draw_world():
                             bridge_list["24"][0].draw(P, scroll, TILE_SIZE, tiles_list)
                 elif tile == 9:
                     t.draw()
-                    if P and t.colliderect(P):
+                    if P and t.collide_rect(P):
                         P.add_ladder((y, x))
                     else:
                         P.remove_ladder((y, x))
 
                 elif tile not in background_tiles:
                     t.draw()
-                    if P and t.colliderect(P):
+                    if P and t.collide_rect(P):
                         P.is_colliding((t.x, t.y), (y, x))
                     elif P:
                         P.not_colliding((y, x))
@@ -273,16 +276,11 @@ def draw_text(text, font, text_col, x, y):
 
 # Makes the side and lower part of the GUI visible.
 def draw_debug_console():
-    #  pygame.draw.rect(screen, '#E6E6FA', (W, 0, SIDE_MARGIN, H))
     pygame.draw.rect(screen, '#E6E6FA', (0, H, W + SIDE_MARGIN, LOWER_MARGIN))
     draw_text(f"level: {level}", font, 'navy', 0, H + 20)
     if P:
         draw_text(f"Player X: {P.get_location()[0]}", font, 'navy', 250, H + 15)
         draw_text(f"Player Y: {P.get_location()[1]}", font, 'navy', 1100, H + 15)
-        # if P.last_collider():
-        #     draw_text(f"Collider X: {P.last_collider()[0][0]}", font, 'navy', 250, H + 40)
-        #     draw_text(f"Collider Y: {P.last_collider()[0][1]}", font, 'navy', 675, H + 40)
-        #     draw_text(f"Num Coll: {P.last_collider()[1]}", font, 'navy', 1100, H + 40)
         draw_text(f"Blocked Above: {P.get_blocked_above()}", font, 'navy', 250, H + 40)
         draw_text(f"Blocked Below: {P.get_blocked_below()}", font, 'navy', 800, H + 40)
         draw_text(f"Blocked Left: {P.blocked_left_right()[0]}", font, 'navy', 250, H + 65)
@@ -290,7 +288,7 @@ def draw_debug_console():
         draw_text(f"Scroll:{scroll}", font, 'indigo', 700, H + 15)
 
 
-def load_level_data(menu=False):
+def load_level_data(menu=False, restart=False):
     global scroll, world_data, coordinates_filled, world_coordinates, cherry_data, level, bridge_list, sign_list, \
         current_bridge_problem, current_bridge_problem, current_sign, problem_index, max_level
     bridge_list = OrderedDict()
@@ -313,16 +311,17 @@ def load_level_data(menu=False):
     if menu:
         loaded_level = 10
     else:
-        file_path = f'main/level_data/level_code/level{level}_text.txt'
-        if os.path.exists(file_path):
-            with open(file_path, 'r') as file:
-                lines = file.readlines()
-                final_text = ""
-                for line in lines:
-                    text = line.__str__()
-                    final_text += text + " "
-                final_text = final_text[:-2]
-                user_input.set_user_text(final_text)
+        if not restart:
+            file_path = f'main/level_data/level_code/level{level}_text.txt'
+            if os.path.exists(file_path):
+                with open(file_path, 'r') as file:
+                    lines = file.readlines()
+                    final_text = ""
+                    for line in lines:
+                        text = line.__str__()
+                        final_text += text + " "
+                    final_text = final_text[:-2]
+                    user_input.set_user_text(final_text)
         file_path = f'main/level_data/hint_txt/hint{loaded_level + 1}.txt'
         if os.path.exists(file_path):
             with open(file_path, 'r') as file:
@@ -373,13 +372,6 @@ def save_level_data(text):
 
 # Draws the grid.
 def draw_grid():
-    #
-    # for col in range(MAX_COLS + 1):
-    #     pygame.draw.line(screen, WHITE, (col * TILE_SIZE - scroll, 0), (col * TILE_SIZE - scroll, H))
-    #
-    # for row in range(MAX_COLS + 1):
-    #     pygame.draw.line(screen, WHITE, (0, row * TILE_SIZE), (W, row * TILE_SIZE))
-
     # draws cols
     for col in range(MAX_COLS + 1):
         x = col * TILE_SIZE - scroll
@@ -427,13 +419,13 @@ def scroll_world_free_movement():
 
 
 # display surface
-W, H = 1280, 720
+W, H = 1280, 720  # 1300, 900
 HW, HH = W / 2, H / 2
 LOWER_MARGIN, SIDE_MARGIN = 100, 300
 
 # pygame setup
 pygame.init()
-screen = pygame.display.set_mode((W + SIDE_MARGIN, H))
+screen = pygame.display.set_mode((W + SIDE_MARGIN, H)) # + LOWER_MARGIN)) # Add 'LOWER_MARGIN' to H to see console when drawing it.
 pygame.scrap.init()
 clock = pygame.time.Clock()
 pygame.display.set_caption("Outside The Fox")
@@ -626,7 +618,9 @@ while True:
         if start_screen.get_level_wanted() != level:
             save_level_data(user_input.get_text_saved())
             level = start_screen.get_level_wanted()
-            load_level_data()
+            load_level_data(False, False)
+            user_manual.reset_page()
+            user_manual.set_active(True)
             score = 0
             arrow = None
             run_tries = 0
@@ -719,19 +713,24 @@ while True:
                 start_screen.start_screen_on(pygame.time.get_ticks())
                 start_screen.set_paused()
                 loaded_game_level = False
-                load_level_data(True)
+                load_level_data(True, False)
+                user_manual.reset_page()
             # scroll_world_free_movement()  # Uncomment to scroll with Q-D movement
             if scrolling:
                 scroll = pygame.math.lerp(scroll, goal_scroll, 0.05)
                 if math.ceil(scroll) == math.ceil(goal_scroll) or math.floor(scroll) == math.floor(goal_scroll):
                     scrolling = False
                     scroll = goal_scroll
+                    input_validator.set_busy(False)
+
             if len(input_validator.get_queue()) > 0 and not P.get_lerping():
                 answer = input_validator.process_queue(scroll)
                 if answer:
                     # draw_world()
                     goal_scroll += answer[0] * TILE_SIZE / 2
                     scrolling = answer[1]
+                    if scrolling:
+                        input_validator.set_busy(True)
 
             if P.get_reach_right_boundary():  # P.get_location()[0] >= (W - 150):
                 reset_scroll = True
@@ -744,7 +743,7 @@ while True:
             if restart_button.draw(screen):
                 P = None
                 arrow = None
-                load_level_data()
+                load_level_data(False, True)
                 score = 0
                 run_tries = 0
                 cherry_count = 0
@@ -781,7 +780,8 @@ while True:
             score = 0
             run_tries = 0
             cherry_count = 0
-            load_level_data()
+            load_level_data(False, False)
+            user_manual.reset_page()
             start_screen.set_level_wanted(level)
         else:
             P = player.Player(3, 30, player_animation_list, (W, H), TILE_SIZE)
@@ -790,7 +790,9 @@ while True:
             user_input.clear_text()
             level += 1
             start_screen.set_level_wanted(level)
-            load_level_data()
+            load_level_data(False, False)
+            user_manual.reset_page()
+            user_manual.set_active(True)
             scroll = 0
             arrow = None
             scrolling = False
@@ -809,7 +811,7 @@ while True:
     else:
         draw_world()
         start_screen.start_screen_on(pygame.time.get_ticks())
-    # draw_debug_console() # Uncomment to see debug console.
+    # draw_debug_console() # Uncomment to see debug console after adding 'LOWER_MARGIN' to 'H' to see console when drawing it.
 
     pygame.display.update()
     clock.tick(FPS)

@@ -65,12 +65,12 @@ class UserManual:
     def __init__(self, x, y, user_manual_text):
         self.x = x
         self.y = y
-        self.active = False
+        self.active = True
         self.user_manual_text = user_manual_text
         self.level_text = ""
         self.hint_text = ""
         self.text = self.user_manual_text
-        self.state = 'M'
+        self.state = 'L'
         self.active_W = 400
         self.inactive_rect = pygame.Rect(self.x + 115, self.y + 15, 70, self.y + 70)
         self.active_rect = pygame.Rect(self.x - 250, 25, self.active_W, self.y + 600)
@@ -199,10 +199,16 @@ class UserManual:
     def flip_active(self):
         self.active = not self.active
 
+    def set_active(self, value):
+        self.active = value
+
     def set_level_text(self, text):
         self.level_text = text
         self.level_text_surface = []
         parse_text(self.level_text, self.level_text_surface, self.text_font, self.limit, self.active_W)
+
+    def reset_page(self):
+        self.page = 1
 
     def set_hint_text(self, text):
         self.hint_text = text
