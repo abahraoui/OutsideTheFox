@@ -188,7 +188,7 @@ def draw_world():
                 game_manager.start_problem(p_list, problem_index, runner, editor)
             elif p_list[problem_index][1][0] is not None:
                 sign_pressed = False
-                p_list[problem_index][1][0].set_hovering(False)  # TODO Debug why sign doesn't end
+                p_list[problem_index][1][0].set_hovering(False)
 
     def process_colliding_tiles():
         current_tile.draw()
