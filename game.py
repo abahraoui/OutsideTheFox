@@ -1,817 +1,574 @@
-import math
-import os
 import pickle
 import sys
 from itertools import cycle
-from main import startscreen
-
-import pygame
-from main import player
-from main import tile as tile_class
-from pygame.locals import *
-from main import spritesheet
-from main import userinputfield
-from main import inputboxvalidator
-from main import usermanual
-from main import cherry_tile
-from main import music_button as music_button_class
-from main import button
-from main import bridge as bridge_class
-from main import credits
 from collections import OrderedDict
+import pygame
+
+from main import menu, player as player_class, code_editor, code_runner, \
+    usermanual, credits as credits_class, loader as loader_class, renderer, game_manager
+from main.buttons import button, music_button as music_button_class
+from main.tiles import animated_tile, tile as tile_class, level_completion_door, ladder_tile
+
+"""
+This module contains the game main loop, which handles the game's events, drawing, and logic, and variables.
+"""
 
 
 # Event handler
 def events():
-    global paused, scroll, goal_scroll, scrolling
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-            save_level_data(user_input.get_text_saved())
+    """Handles all input events in the game."""
+
+    def __handle_editor_keys():
+        if event.key == pygame.K_BACKSPACE:
+            # Check if BACKSPACE is pressed
+            editor.remove_text()
+        elif event.key == pygame.K_v and pygame.key.get_mods() & pygame.KMOD_CTRL:
+            # Check if Ctrl+V is pressed
+            clipboard_content = pygame.scrap.get(pygame.SCRAP_TEXT).decode()
+            if len(clipboard_content) > 1:
+                if clipboard_content[-1] == '\x00':
+                    clipboard_content = clipboard_content[:-1]
+                if clipboard_content[-1] == " ":
+                    clipboard_content = clipboard_content[:-1]
+                editor.paste_clipboard(clipboard_content)
+                editor.start_feedback("Pasted")
+        elif event.key == pygame.K_c and pygame.key.get_mods() & pygame.KMOD_CTRL:
+            # Check if Ctrl+C is pressed
+            text = editor.get_copy_text()
+            if len(text) > 0:
+                pygame.scrap.put(pygame.SCRAP_TEXT, text)
+                editor.start_feedback("Copied")
+        elif event.key == pygame.K_LEFT:
+            # Check if LEFT is pressed
+            editor.increment_offset()
+        elif event.key == pygame.K_RIGHT:
+            # Check if RIGHT is pressed
+            editor.decrement_offset()
+        # elif event.type == pygame.KEYDOWN and event.key == pygame.K_UP:
+        #     editor.increment_offset_up()
+        # elif event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN:
+        #     editor.decrement_offset_down()
+        else:
+            editor.add_text(event.unicode)
+
+    def __handle_editor_copy_rect():
+        if event.type == pygame.MOUSEBUTTONDOWN and not editor.is_copy_rect() and editor.get_active():
+            editor.set_copy_rect_start_pos(pygame.mouse.get_pos())
+        elif event.type == pygame.MOUSEMOTION and editor.is_copy_rect() and editor:
+            editor.set_copy_rect_end_pos(pygame.mouse.get_pos())
+        else:
+            editor.void_copy_rect_pos()
+
+    def __handle_activating_components():
+        if user_manual.mouse_colliding(pygame.mouse.get_pos()):
+            pygame.mouse.set_cursor(*pygame.cursors.broken_x)
+        elif editor.mouse_colliding(pygame.mouse.get_pos()):
+            if not editor.get_active():
+                pygame.mouse.set_cursor(*pygame.cursors.broken_x)
+            editor.set_mouse_over(True)
+        else:
+            pygame.mouse.set_cursor(*pygame.cursors.arrow)
+            editor.set_mouse_over(False)
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if editor.mouse_colliding(event.pos):
+                pygame.mouse.set_cursor(*pygame.cursors.arrow)
+                editor.set_active(True)
+            else:
+                editor.set_active(False)
+            if user_manual.mouse_colliding(event.pos):
+                user_manual.change_state("LEVEL")
+                user_manual.flip_active()
+
+    def __handle_in_game_keys():
+        if event.type == pygame.KEYDOWN:
+            if user_manual.get_active() and event.key == pygame.K_RIGHT:
+                user_manual.change_page("RIGHT")
+            elif event.key == pygame.K_LEFT:
+                user_manual.change_page("LEFT")
+
+            if not editor.get_active():
+                return
+            __handle_editor_keys()
+
+    def __handle_menu_keys():
+        if event.type == pygame.KEYDOWN and (menu.get_state() == "LEVEL_SELECTION" or menu.get_state() == "HELP"):
+            if event.key == pygame.K_RIGHT:
+                menu.change_page("RIGHT")
+            elif event.key == pygame.K_LEFT:
+                menu.change_page("LEFT")
+
+    def __handle_quitting_the_game():
+        if event.type == pygame.QUIT or menu.get_quitting():  # or (event.type == KEYDOWN and event.key == K_ESCAPE):
+            save_level_data(editor.get_user_answer())
             pygame.quit()
             sys.exit()
-        # Start game handler
-        elif event.type == KEYDOWN and event.key == K_F1:
-            paused = False
-        if P:
-            if input_validator.isDone() and not start_screen.get_paused():
 
-                if user_manual.mouse_colliding(pygame.mouse.get_pos()):
-                    # if not user_manual.get_active():
-                    pygame.mouse.set_cursor(*pygame.cursors.broken_x)
+    for event in pygame.event.get():
+        """
+        Handles keys when in menu and saving then quitting the game.
+        """
+        __handle_quitting_the_game()
+        __handle_menu_keys()
 
-                elif user_input.mouse_colliding(pygame.mouse.get_pos()):
-                    if not user_input.get_active():
-                        pygame.mouse.set_cursor(*pygame.cursors.broken_x)
-                    user_input.set_mouse_over(True)
-                    user_input.color = "red"
-                else:
-                    pygame.mouse.set_cursor(*pygame.cursors.arrow)
-                    user_input.set_mouse_over(False)
-
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if user_input.mouse_colliding(event.pos):
-                        pygame.mouse.set_cursor(*pygame.cursors.arrow)
-                        user_input.set_active(True)
-                    else:
-                        user_input.set_active(False)
-                    if user_manual.mouse_colliding(event.pos):
-                        user_manual.change_state("L")
-                        user_manual.flip_active()
-                    if sign_pressed:
-                        user_manual.change_state("L")
-                        user_manual.flip_active()
-                if event.type == pygame.KEYDOWN and user_manual.get_active():
-                    if event.key == pygame.K_RIGHT:
-                        user_manual.change_page("R")
-                    elif event.key == pygame.K_LEFT:
-                        user_manual.change_page("L")
-
-                if event.type == pygame.KEYDOWN and user_input.get_active():
-                    # Check for backspace
-                    if event.key == pygame.K_BACKSPACE:
-                        user_input.remove_text()
-                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_v and pygame.key.get_mods() & pygame.KMOD_CTRL:
-                        # Check if Ctrl+V is pressed
-                        clipboard_content = pygame.scrap.get(pygame.SCRAP_TEXT).decode()
-                        if len(clipboard_content) > 1:
-                            if clipboard_content[-1] == '\x00':
-                                clipboard_content = clipboard_content[:-1]
-                            if clipboard_content[-1] == " ":
-                                clipboard_content = clipboard_content[:-1]
-                            user_input.paste_clipboard(clipboard_content)
-                            user_input.start_feedback("Pasted")
-                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_c and pygame.key.get_mods() & pygame.KMOD_CTRL:
-                        text = user_input.get_copy_text()
-                        if len(text) > 0:
-                            pygame.scrap.put(pygame.SCRAP_TEXT, text)
-                            user_input.start_feedback("Copied")
-                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT:
-                        user_input.increment_offset()
-                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT:
-                        user_input.decrement_offset()
-                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_UP:
-                        user_input.increment_offset_up()
-                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_DOWN:
-                        user_input.decrement_offset_down()
-                    else:
-                        user_input.add_text(event.unicode)
-                elif event.type == pygame.MOUSEBUTTONDOWN and not user_input.is_copy_rect() and user_input.get_active():
-                    user_input.set_copy_rect_start_pos(pygame.mouse.get_pos())
-                elif event.type == pygame.MOUSEMOTION and user_input.is_copy_rect() and user_input:
-                    user_input.set_copy_rect_end_pos(pygame.mouse.get_pos())
-                else:
-                    user_input.void_copy_rect_pos()
-            else:
-                if event.type == pygame.KEYDOWN and (
-                        start_screen.get_state() == "L" or start_screen.get_state() == "H"):
-                    if event.key == pygame.K_RIGHT:
-                        start_screen.change_page("R")
-                    elif event.key == pygame.K_LEFT:
-                        start_screen.change_page("L")
+        if not player:
+            continue
+        if not runner.is_done() or menu.get_paused():
+            continue
+        """
+        If player is instantiated and the runner is done, then handle the following events.
+        """
+        __handle_activating_components()
+        __handle_in_game_keys()
+        __handle_editor_copy_rect()
 
 
-# Draws and makes the background scrollable.
-def draw_bg():
-    screen.fill('crimson')
-    width = bg.get_width()
-    for x in range(4):
-        screen.blit(bg, ((x * width) - scroll * 0.5, 0))
-        screen.blit(md, ((x * width) - scroll * 0.8, 300))
-        screen.blit(md, ((x * width) - scroll * 0.8 + 400, 300))
-        screen.blit(md, ((x * width) - scroll * 0.8 + 780, 300))
-        screen.blit(md, ((x * width) - scroll * 0.8, 492))
-        screen.blit(md, ((x * width) - scroll * 0.8 + 442, 450))
-        screen.blit(md, ((x * width) - scroll * 0.8 + 822, 450))
-
-
-# Changes the scroll direction of the world.
-def change_scroll_direction():
-    global scroll
-    if scroll_left and scroll > 0 and P.stop_scroll() != "L":
-        scroll -= 5 * scroll_speed
-    if scroll_right and scroll < (MAX_COLS * TILE_SIZE) - W and P.stop_scroll() != "R":
-        scroll += 5 * scroll_speed
-
-
-# Draw each tile based on position in the grid.
 def draw_world():
-    global coordinates_filled, score, finished_level, current_bridge_problem, current_sign, arrow, sign_pressed, cherry_count
-    ground.empty()
+    """
+    This function iterates over each tile in the world data and draws it at the appropriate position on the screen.
+    It also handles special behavior for certain types of tiles, such as doors, problems, cherries, ladders, signs,
+    and background tiles.
+    """
+    global coordinates_filled
+
+    def process_door():
+        global finished_level
+        door = level_completion_door.Door(x * TILE_SIZE - scroll,
+                                          y * TILE_SIZE, tiles_list[tile], tile)
+        door.draw()
+        if player and door.collide_rect(player):
+            finished_level = True
+            player.set_finished()
+
+    def process_problem():
+        renderer.draw_problem(x, y, tile, str(tile), problem_list, player, scroll, TILE_SIZE, tiles_list)
+
+    def process_cherry():
+        global cherry_data, score, cherry_count
+        cherry_data, score, cherry_count = game_manager.process_cherry_tile(x, y, scroll, TILE_SIZE, cherry_data,
+                                                                            cherry_animation_list, player, cherry_count,
+                                                                            score)
+
+    def process_ladder():
+        ladder = ladder_tile.Ladder(x * TILE_SIZE - scroll, y * TILE_SIZE, tiles_list[tile], tile)
+        ladder.draw()
+        if player and ladder.collide_rect(player):
+            player.add_ladder((y, x))
+        else:
+            player.remove_ladder((y, x))
+
+    def process_sign():
+        global current_problem_index, current_sign, arrow, sign_pressed
+        if (y, x) not in sign_list:
+            sign_list[(y, x)] = current_tile
+        elif (y, x) in sign_list:
+            sign_list[(y, x)] = current_tile
+            p_list = list(problem_list.items())
+            s_list = list(sign_list.items())
+
+            if problem_index >= len(p_list):
+                return
+            current_problem_index = p_list[problem_index][0]
+            current_sign = s_list[problem_index][0]
+            if (not problem_list and p_list[problem_index][1][0].get_completed() and
+                    sign_list[current_sign] != current_tile):
+                return
+            pos = pygame.mouse.get_pos()
+
+            current_tile.draw()
+            if editor.get_mode() == "Player":
+                if arrow is None:
+                    arrow = animated_tile.AnimatedTile(x * TILE_SIZE - scroll - 45,
+                                                       y * TILE_SIZE - 125,
+                                                       arrow_animation_list, arrow_animation_list[0], "arrow")
+            elif editor.get_mode() == "Problem":
+                arrow = None
+            if current_tile.get_rect().collidepoint(pos):
+                sign_pressed = True
+                game_manager.start_problem(p_list, problem_index, runner, editor)
+            elif p_list[problem_index][1][0] is not None:
+                sign_pressed = False
+                p_list[problem_index][1][0].set_hovering(False)  # TODO Debug why sign doesn't end
+
+    def process_colliding_tiles():
+        current_tile.draw()
+        if player and current_tile.collide_rect(player):
+            player.is_colliding((current_tile.x, current_tile.y), (y, x))
+        elif player:
+            player.not_colliding((y, x))
+
     for y, row in enumerate(world_data):
         for x, tile in enumerate(row):
 
+            if tile < 0:
+                continue
+
             if world_coordinates[y][x] == (0, 0) and not coordinates_filled:
                 world_coordinates[y][x] = (x * TILE_SIZE, y * TILE_SIZE)
-                if (x, y) == (149, 15):
+                if (x, y) == (MAX_COLS - 1, ROWS - 1):
                     coordinates_filled = True
-            if tile >= 0:
-                t = tile_class.Tile(x * TILE_SIZE - scroll, y * TILE_SIZE, (W, H), tiles_list[tile], tile)
 
-                if tile == 14:
-                    t.draw()
-                    if P and t.collide_rect(P):
-                        finished_level = True
-                        P.set_finished()
-                elif tile == 21:
-                    if (y, x) not in cherry_data:
-                        cherry = cherry_tile.Cherry(x * TILE_SIZE - scroll, y * TILE_SIZE, cherry_animation_list,
-                                                    (y, x))
-                        cherry_data[(y, x)] = cherry
-                    elif cherry_data[(y, x)] != "Removed":
-                        cherry_data[(y, x)].set_location((x * TILE_SIZE - scroll, y * TILE_SIZE))
-                    if cherry_data[(y, x)] != "Removed":
-                        cherry_data[(y, x)].draw()
-                        if P and cherry_data[(y, x)].colliderect(P):
-                            jump_sound = pygame.mixer.Sound("assets/audio/sounds/348112__matrixxx__crunch.wav")
-                            jump_sound.play()
-                            jump_sound.set_volume(1)
-                            cherry_data[(y, x)] = "Removed"
-                            score += 50
-                            cherry_count += 1
-                elif tile == 22:
-                    if (y, x) not in sign_list:
-                        sign_list[(y, x)] = t
-                    elif (y, x) in sign_list:
-                        sign_list[(y, x)] = t
-                        b_list = list(bridge_list.items())
-                        s_list = list(sign_list.items())
-                        if problem_index < len(b_list) and b_list[problem_index][1][0] is not None:
-                            current_bridge_problem = b_list[problem_index][0]
-                            current_sign = s_list[problem_index][0]
-                            if bridge_list and not b_list[problem_index][1][0].completed and sign_list[
-                                current_sign] == t:
-                                pos = pygame.mouse.get_pos()
-                                t.draw()
-                                if user_input.get_mode() == "Player":
-                                    if arrow is None:
-                                        arrow = cherry_tile.Cherry(x * TILE_SIZE - scroll - 45, y * TILE_SIZE - 125,
-                                                                   arrow_animation_list,
-                                                                   "arrow")
-                                elif user_input.get_mode() == "Problem":
-                                    arrow = None
-                                if t.get_rect().collidepoint(pos):
-                                    sign_pressed = True
-                                    b_list[problem_index][1][0].set_hovering(True)
-                                    if pygame.mouse.get_pressed()[0] == 1:
-                                        match b_list[problem_index][1][0].id:
-                                            case 8:
-                                                input_validator.set_mode("Bridge")
-                                                input_validator.set_problem_size(
-                                                    b_list[problem_index][1][0].get_problem_size())
-                                            case 23:
-                                                input_validator.set_mode("Ladder")
-                                                input_validator.set_problem_size(
-                                                    b_list[problem_index][1][0].get_problem_size())
-                                            case 24:
-                                                input_validator.set_mode("Spike")
-                                                input_validator.set_problem_size(
-                                                    b_list[problem_index][1][0].get_problem_size())
+            current_tile = tile_class.Tile(x * TILE_SIZE - scroll, y * TILE_SIZE, tiles_list[tile], tile)
 
-                                        user_input.set_mode("Problem")
-                                else:
-                                    sign_pressed = False
-                                    b_list[problem_index][1][0].set_hovering(False)
+            if tile == 14:  # Level completion door
+                process_door()
 
-                elif tile == 8:
-                    if "8" not in bridge_list:
-                        bridge_list["8"] = None, {}
-                    if (y, x) not in bridge_list["8"][1]:
-                        bridge_list["8"][1][(y, x)] = tile
-                    elif (y, x) in bridge_list["8"][1]:
-                        bridge_list["8"][1][(y, x)] = tile
-                        if len(bridge_list["8"][1]) > 0 and bridge_list["8"][0] is None:
-                            bridge = bridge_class.Bridge(W, H, bridge_list["8"][1], False, TILE_SIZE, 8,
-                                                         bridge_list["8"][1])
-                            bridge_list["8"] = bridge, bridge_list["8"][1]
-                        if "8" in bridge_list and len(bridge_list["8"][1]) > 0:
-                            bridge_list["8"][0].draw(P, scroll, TILE_SIZE, tiles_list)
-                elif tile == 23:
-                    if "23" not in bridge_list:
-                        bridge_list["23"] = None, {}
-                    if (y, x) not in bridge_list["23"][1]:
-                        bridge_list["23"][1][(y, x)] = tile
-                    elif (y, x) in bridge_list["23"][1]:
-                        bridge_list["23"][1][(y, x)] = tile
-                        if len(bridge_list["23"][1]) > 0 and bridge_list["23"][0] is None:
-                            bridge = bridge_class.Bridge(W, H, bridge_list["23"][1], False, TILE_SIZE, 23,
-                                                         bridge_list["23"][1])
-                            bridge_list["23"] = bridge, bridge_list["23"][1]
-                        if "23" in bridge_list and len(bridge_list["23"][1]) > 0:
-                            bridge_list["23"][0].draw(P, scroll, TILE_SIZE, tiles_list)
-                elif tile == 24:
-                    if "24" not in bridge_list:
-                        bridge_list["24"] = None, {}
-                    if (y, x) not in bridge_list["24"][1]:
-                        bridge_list["24"][1][(y, x)] = tile
-                    elif (y, x) in bridge_list["24"][1]:
-                        bridge_list["24"][1][(y, x)] = tile
-                        if len(bridge_list["24"][1]) > 0 and bridge_list["24"][0] is None:
-                            bridge = bridge_class.Bridge(W, H, bridge_list["24"][1], False, TILE_SIZE, 24,
-                                                         bridge_list["24"][1])
-                            bridge_list["24"] = bridge, bridge_list["24"][1]
-                        if "24" in bridge_list and len(bridge_list["24"][1]) > 0:
-                            bridge_list["24"][0].draw(P, scroll, TILE_SIZE, tiles_list)
-                elif tile == 9:
-                    t.draw()
-                    if P and t.collide_rect(P):
-                        P.add_ladder((y, x))
-                    else:
-                        P.remove_ladder((y, x))
+            elif tile in [8, 23, 24]:  # Problem tiles
+                process_problem()
 
-                elif tile not in background_tiles:
-                    t.draw()
-                    if P and t.collide_rect(P):
-                        P.is_colliding((t.x, t.y), (y, x))
-                    elif P:
-                        P.not_colliding((y, x))
-                else:
-                    screen.blit(tiles_list[tile], (x * TILE_SIZE - scroll, y * TILE_SIZE))
+            elif tile == 21:  # Cherry tile
+                process_cherry()
+
+            elif tile == 9:  # Ladder tile
+                process_ladder()
+
+            elif tile == 22:  # Sign tile
+                process_sign()
+
+            elif tile not in background_tiles:  # All other tiles not in the background
+                process_colliding_tiles()
+
+            else:  # Background tiles
+                screen.blit(tiles_list[tile], (x * TILE_SIZE - scroll, y * TILE_SIZE))
 
 
-# Helper function to draw some text.
-def draw_text(text, font, text_col, x, y):
-    img = font.render(text, True, text_col)
-    screen.blit(img, (x, y))
+def draw_hud():
+    global loaded_game_level
+    renderer.draw_hud(screen, user_manual, level, FONT,
+                      cherry_animation_list, cherry_count, music_button, level_button, menu, run_tries,
+                      max_level)
+
+    if pause_button.draw(screen):
+        editor.set_mode("Player")
+        menu.set_state("MENU")
+        menu.set_paused()
+        loaded_game_level = False
+        load_level_data(True, False)
+        user_manual.reset_page()
 
 
-# Makes the side and lower part of the GUI visible.
-def draw_debug_console():
-    pygame.draw.rect(screen, '#E6E6FA', (0, H, W + SIDE_MARGIN, LOWER_MARGIN))
-    draw_text(f"level: {level}", font, 'navy', 0, H + 20)
-    if P:
-        draw_text(f"Player X: {P.get_location()[0]}", font, 'navy', 250, H + 15)
-        draw_text(f"Player Y: {P.get_location()[1]}", font, 'navy', 1100, H + 15)
-        draw_text(f"Blocked Above: {P.get_blocked_above()}", font, 'navy', 250, H + 40)
-        draw_text(f"Blocked Below: {P.get_blocked_below()}", font, 'navy', 800, H + 40)
-        draw_text(f"Blocked Left: {P.blocked_left_right()[0]}", font, 'navy', 250, H + 65)
-        draw_text(f"Blocked Right: {P.blocked_left_right()[1]}", font, 'navy', 800, H + 65)
-        draw_text(f"Scroll:{scroll}", font, 'indigo', 700, H + 15)
+def load_level_data(going_to_menu=False, restart=False):
+    """
+    Loads the level data using the loader file, it loads relevant level and hint text, world data, and variables.
+    10 is the menu level. Can be changed.
+    """
+    global world_data, coordinates_filled, world_coordinates, cherry_data, problem_list, sign_list, \
+        current_problem_index, current_sign, problem_index, max_level
 
+    problem_list, sign_list, current_problem_index, current_sign, \
+        problem_index, cherry_data, coordinates_filled = loader_class.reset_variables()
 
-def load_level_data(menu=False, restart=False):
-    global scroll, world_data, coordinates_filled, world_coordinates, cherry_data, level, bridge_list, sign_list, \
-        current_bridge_problem, current_bridge_problem, current_sign, problem_index, max_level
-    bridge_list = OrderedDict()
-    sign_list = OrderedDict()
-    current_bridge_problem = 0
-    current_sign = 0
-    problem_index = 0
-    cherry_data = {}
-    coordinates_filled = False
-    world_data = []
-    world_coordinates = []
+    world_coordinates, world_data = loader_class.load_world_coordinates(ROWS, MAX_COLS)
 
-    for i in range(ROWS):
-        row = [-1] * MAX_COLS
-        coord_row = [(0, 0)] * MAX_COLS
-        world_data.append(row)
-        world_coordinates.append(coord_row)
     loaded_level = level
-    scroll = 0
-    if menu:
-        loaded_level = 10
+    if going_to_menu:
+        loaded_level = "menu"
     else:
-        if not restart:
-            file_path = f'main/level_data/level_code/level{level}_text.txt'
-            if os.path.exists(file_path):
-                with open(file_path, 'r') as file:
-                    lines = file.readlines()
-                    final_text = ""
-                    for line in lines:
-                        text = line.__str__()
-                        final_text += text + " "
-                    final_text = final_text[:-2]
-                    user_input.set_user_text(final_text)
-        file_path = f'main/level_data/hint_txt/hint{loaded_level + 1}.txt'
-        if os.path.exists(file_path):
-            with open(file_path, 'r') as file:
-                lines = file.readlines()
-                text = ""
-                for line in lines:
-                    text += line.__str__()
-                user_manual.set_hint_text(text)
-        file_path = f'main/level_data/level_txt/level{loaded_level + 1}.txt'
-        if os.path.exists(file_path):
-            with open(file_path, 'r') as file:
-                lines = file.readlines()
-                text = ""
-                for line in lines:
-                    text += line.__str__()
-                user_manual.set_level_text(text)
+        max_level = loader_class.load_level_txt_files(restart, level, loaded_level, editor, user_manual,
+                                                      FINAL_LEVEL, max_level)
 
-        with open(f'main/level_data/max_level.txt', 'r') as file:
-            current_max_level = int(file.readline().__str__())
-            if current_max_level < 9:
-                max_level = int(current_max_level.__str__())
-
-    pickle_in = open(f'./main/level_data/level{loaded_level}_data', 'rb')
-    world_data = pickle.load(pickle_in)
+    with open(f'./main/level_data/level{loaded_level}_data', 'rb') as pickle_in:
+        world_data = pickle.load(pickle_in)
 
 
 def save_level_data(text):
+    """
+    Saves the level data, user's code, and score to the appropriate files.
+    """
     file = open(f'main/level_data/level_code/level{level}_text.txt', 'w')
-    for t in text:
-        file.write(t + " ")
+    for word in text:
+        file.write(word + " ")
     file.close()
 
     if level < 9:
-        with open(f'main/level_data/max_level.txt', 'r') as file:
-            current_max_level = int(file.readline().__str__())
+        with open('main/level_data/max_level.txt', 'r') as file:
+            current_max_level = int(file.readline())
         if current_max_level < max_level:
-            with open(f'main/level_data/max_level.txt', 'w') as file:
+            with open('main/level_data/max_level.txt', 'w') as file:
                 file.write(str(max_level))
             file.close()
 
         with open(f'main/level_data/level_score/level{level}_score.txt', 'r') as file:
-            current_score = int(file.readline().__str__())
+            current_score = int(file.readline())
         if current_score < score:
             with open(f'main/level_data/level_score/level{level}_score.txt', 'w') as file:
                 file.write(str(score))
             file.close()
 
 
-# Draws the grid.
-def draw_grid():
-    # draws cols
-    for col in range(MAX_COLS + 1):
-        x = col * TILE_SIZE - scroll
-        y = col * TILE_SIZE
-        rounded_p_x = P.get_location()[0] + scroll + TILE_SIZE / 2
-        if P.get_location()[0] + TILE_SIZE * 5 >= x >= P.get_location()[0] - TILE_SIZE * 5:
-            rounded_p_y = P.get_location()[1] - P.get_location()[1] % TILE_SIZE  # Is the rounded up perfect tile y.
-            offset_y = col * TILE_SIZE
-            if offset_y >= rounded_p_x:
-                offset_y = offset_y - 2 * (offset_y - rounded_p_x) - TILE_SIZE
-
-            pygame.draw.line(screen, WHITE, (x, rounded_p_y + (offset_y) - (rounded_p_x - 225) + TILE_SIZE),
-                             (x, rounded_p_y - offset_y + (rounded_p_x - 225)))
-    # draws rows
-    for row in range(MAX_COLS + 1):
-        y = row * TILE_SIZE
-        rounded_p_y = P.get_location()[1] - P.get_location()[1] % TILE_SIZE
-        if P.get_location()[1] + TILE_SIZE * 5 >= y >= P.get_location()[1] - TILE_SIZE * 5:
-            rounded_p_x = P.get_location()[0]
-            offset_x = (rounded_p_x - rounded_p_x % TILE_SIZE) - abs(row * TILE_SIZE - rounded_p_y) + 5 * TILE_SIZE
-            if rounded_p_y < y:
-                offset_x += TILE_SIZE
-            if not (rounded_p_x / TILE_SIZE).is_integer():
-                offset_x += TILE_SIZE / 2
-            offset_x = offset_x - (offset_x % TILE_SIZE)
-            if scroll != int(scroll):
-                offset_x -= 22.5
-            start_x = rounded_p_x - (offset_x - rounded_p_x)
-            pygame.draw.line(screen, WHITE, (start_x, y), (offset_x, y))
+def prepare_level_change():
+    save_level_data(editor.get_user_answer())
+    user_manual.reset_page()
+    user_manual.set_active(True)
 
 
-def scroll_world_free_movement():
-    global scroll_left
-    global scroll_right
-    change_scroll_direction()
-    if P.get_direction() == 'R' and P.get_moving():
-        scroll_right = True
-        scroll_left = False
-    elif P.get_direction() == 'L' and P.get_moving():
-        scroll_left = True
-        scroll_right = False
+def reset_score():
+    """
+    This function resets the score, run tries, cherry count, arrow; using the game manager's reset_level function.
+    """
+    global score, run_tries, cherry_count, arrow
+    score, run_tries, cherry_count, arrow = game_manager.reset_score()
+
+
+def reset_level():
+    """
+    This function resets the scroll, scrolling, goal scroll, runner, and player; and initialises them to level's relevant values using the game manager's reset_level function.
+    """
+    global scroll, scrolling, goal_scroll, player, runner
+
+    scroll, scrolling, goal_scroll, runner, player = game_manager.reset_level(
+        editor, player_animation_list, player_start_pos, W, H, TILE_SIZE)
+
+
+def reset_score_level():
+    reset_score()
+    reset_level()
+
+
+def finishing_level():
+    """
+    This function clears the editor text, plays the victory sound, prepares for a level change, increments the level, loads the level data, sets the level wanted, and resets the score and the level.
+    """
+    global level
+    editor.clear_text()
+    victory_sound = pygame.mixer.Sound("assets/audio/sounds/342751__rhodesmas__coins-purchase-3.wav")
+    victory_sound.play()
+    victory_sound.set_volume(1)
+    prepare_level_change()
+    level += 1
+    load_level_data(False, False)
+    menu.set_level_wanted(level)
+    reset_score_level()
+
+
+def roll_credits(credits_player):
+    """
+    This function rolls the credits by doing the appropriate actions when the credits are reached.
+    """
+    global scroll, level, credits_reached, player
+    credits_screen.draw()
+    credits_player.moving = True
+    credits_player.climbing = False
+    credits_player.crouching = False
+    credits_player.jumping = False
+    editor.clear_text()
+    game_manager.deactivate_editor(editor)
+    if not credits_screen.get_done():
+        scroll += 0.3
     else:
-        scroll_left = False
-        scroll_right = False
-
-
-# display surface
-W, H = 1280, 720  # 1300, 900
-HW, HH = W / 2, H / 2
-LOWER_MARGIN, SIDE_MARGIN = 100, 300
-
-# pygame setup
-pygame.init()
-screen = pygame.display.set_mode((W + SIDE_MARGIN, H)) # + LOWER_MARGIN)) # Add 'LOWER_MARGIN' to H to see console when drawing it.
-pygame.scrap.init()
-clock = pygame.time.Clock()
-pygame.display.set_caption("Outside The Fox")
-FPS = 120
-WHITE = (255, 255, 255, 255)
-
-# Scroll variables.
-scroll_left = False
-scroll_right = False
-scrolling = False
-goal_scroll = 0
-scroll = 0
-scroll_speed = 1
-reset_scroll = False
-
-# Grid variables.
-ROWS = 16
-MAX_COLS = 150
-TILE_SIZE = H // ROWS
-TILE_TYPES = 26
-level = 0
-max_level = 0
-run_tries = 0
-finished_level = False
-score = 0
-cherry_count = 0
-background_tiles = [2, 15, 16, 17, 18, 19, 20, 22]
-bridge_list = OrderedDict()
-sign_list = OrderedDict()
-sign_pressed = False
-current_bridge_problem = 0
-current_sign = 0
-problem_index = 0
-
-with open("assets/txt_files/manual.txt") as file:
-    manual_text = ""
-    for line in file.readlines():
-        manual_text += line.__str__()
-
-with open("assets/txt_files/help_manual.txt") as file:
-    help_manual_text = ""
-    for line in file.readlines():
-        help_manual_text += line.__str__()
-
-# Loads the tiles for the level editor.
-tiles_list = []
-for x in range(TILE_TYPES):
-    img = pygame.image.load(f'assets/tile/{x}.png').convert_alpha()
-    if x == 14:
-        img = pygame.transform.scale(img, (TILE_SIZE, 2 * TILE_SIZE))
-    elif x in [17, 25]:
-        img = pygame.transform.scale(img, (5 * TILE_SIZE, 5 * TILE_SIZE))
-    elif x in [18, 15, 16]:
-        img = pygame.transform.scale(img, (4 * TILE_SIZE, 4 * TILE_SIZE))
-    elif x in [19]:
-        img = pygame.transform.scale(img, (3 * TILE_SIZE, 3 * TILE_SIZE))
-    elif x in []:
-        img = pygame.transform.scale(img, (2 * TILE_SIZE, 2 * TILE_SIZE))
-    else:
-        img = pygame.transform.scale(img, (TILE_SIZE, TILE_SIZE))
-    img.set_colorkey((0, 0, 0))
-    tiles_list.append(img)
-
-# Init the world_data list.
-world_data = []
-cherry_data = {}
-world_coordinates = []
-coordinates_filled = False
-
-user_input = userinputfield.UserInputField("Player Editor", 24, 56, H - 56, 9)
-
-load_level_data(True)
-
-colors = ["crimson", "indigo", "navy", "violet", "slategrey", "lawngreen"]
-squares = pygame.sprite.Group()
-ground = pygame.sprite.Group()
-ground_rect_list = [[]]
-green = (0, 255, 0)
-blue = (0, 0, 128)
-font = pygame.font.Font('assets/joystix monospace.otf', 32)
-start_text = font.render('Press F1 to Start', True, green, blue)
-start_rect = start_text.get_rect()
-start_rect.center = (HW, HH)
-paused = True
-spawnCounter = 1
-player_action_queue = []
-# Will pause the game until F1 is pressed
-
-bg = pygame.image.load('assets/back.png').convert_alpha()
-bg = pygame.transform.scale(bg, (W, H))
-md = pygame.image.load('assets/middle.png').convert_alpha()
-md = pygame.transform.scale(md, (500, 450))
-BLACK = (0, 0, 0)
-frame = 0
-last_update = pygame.time.get_ticks()
-cherry_animation_list = []
-
-sprite_sheet_image = pygame.image.load('assets/cherry_anim.png').convert_alpha()
-sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
-temp_img = None
-for i in range(5):
-    temp_img = sprite_sheet.get_image(i, 21, 21, 2, BLACK)
-    cherry_animation_list.append(temp_img)
-
-arrow_animation_list = []
-
-sprite_sheet_image = pygame.image.load('assets/arrow_sheet.png').convert_alpha()
-sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
-temp_img = None
-for i in range(4):
-    temp_img = sprite_sheet.get_image(i, 32, 32, 4, WHITE)
-    arrow_animation_list.append(temp_img)
-
-animation_cooldown = 500
-animation_steps = [4, 6, 2, 2, 2, 4]
-action = 0
-animation_assets = ['assets/player_idle.png', 'assets/player_run.png', 'assets/player_jump.png', 'assets/player_hurt'
-                                                                                                 '.png',
-                    'assets/player_crouch.png', 'assets/player_climb.png']
-
-player_animation_list = []
-for x in range(len(animation_steps)):
-    animation = animation_steps[x]
-    sprite_sheet_image = pygame.image.load(animation_assets[x]).convert_alpha()
-    sprite_sheet = spritesheet.SpriteSheet(sprite_sheet_image)
-    temp_img_list = []
-    for i in range(animation):
-        temp_img_list.append(sprite_sheet.get_image(i, 32, 32, 3, BLACK))
-    player_animation_list.append(temp_img_list)
-
-icon = pygame.transform.scale(player_animation_list[0][0], (24, 24))
-pygame.display.set_icon(icon)
-
-player_run_cycle = cycle(player_animation_list[1])
-player_anim = next(player_run_cycle)
-
-start_screen = startscreen.StartScreen(pygame.time.get_ticks(), player_run_cycle, start_text, start_rect,
-                                       (W + SIDE_MARGIN, H), help_manual_text, "")
-start_screen.set_max_level_unlocked(max_level)
-start_screen.set_level_wanted(level)
-
-music_assets = cycle(['assets/audio/music/611440__kjartan_abel__after-the-flu.wav',
-                      'assets/audio/music/647212__kjartan_abel__boschs-garden.wav',
-                      'assets/audio/music/686838__zhr__desert-ambient-music.wav'])
-
-pygame.mixer.music.load(next(music_assets))
-pygame.mixer.music.stop()  # pygame.mixer.music.play()
-
-P = player.Player(3, 30, player_animation_list, (W, H), TILE_SIZE)
-draw_world()
-
-player_start_pos = world_coordinates[14][5]
-P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
-
-input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W, user_input.get_feedback_rect())
-user_manual = usermanual.UserManual(980, 0, manual_text)
-
-off = pygame.image.load("assets/music_off.png").convert_alpha()
-on = pygame.image.load("assets/music_on.png").convert_alpha()
-on.set_colorkey("black")
-
-music_button = music_button_class.MusicButton(50, 225, on, off, 2, "red", "blue", music_assets)
-pygame.mixer.music.play()  # Uncomment for music
-pygame.mixer.music.set_volume(0.03)
-
-level_icon = pygame.image.load("assets/level_icon.png").convert_alpha()
-level_button = button.Button(5, 235, level_icon, 1.5, "lightgreen", (0, 0, 128))
-
-pause_icon = pygame.image.load("assets/pause_icon.png").convert_alpha()
-menu_text = font.render('Menu', True, "white")
-pause_button = button.Button(5, 180, menu_text, 1, "lightgreen", (0, 0, 128))
-
-arrow = None
-restart_text = font.render('Restart', True, "white")
-restart_button = button.Button(5, 125, restart_text, 1, "lightgreen", (0, 0, 128))
-
-bridge = None
-
-credits_screen = credits.Credits(W, H)
-credits_reached = False
-
-loaded_game_level = False
-while True:
-    draw_bg()
-    events()
-    if not start_screen.get_paused() and P:
-        if not loaded_game_level:
-            load_level_data()
-            loaded_game_level = True
-        if start_screen.get_level_wanted() != level:
-            save_level_data(user_input.get_text_saved())
-            level = start_screen.get_level_wanted()
-            load_level_data(False, False)
-            user_manual.reset_page()
-            user_manual.set_active(True)
-            score = 0
-            arrow = None
-            run_tries = 0
-            cherry_count = 0
-            user_input.set_error_processed()
-            user_input.set_mode("Player")
-            P = player.Player(3, 30, player_animation_list, (W, H), TILE_SIZE)
-            scroll = 0
-            scrolling = False
-            goal_scroll = 0
-            P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
-            input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W, user_input.get_feedback_rect())
-        draw_world()
-        if input_validator.isDone():
-            if input_validator.get_mode() != "Player" and input_validator.get_problem_try() is not None and not \
-                    bridge_list[current_bridge_problem][0].get_show_feedback():
-                bridge_list[current_bridge_problem][0].set_problem_try(input_validator.get_problem_try())
-                input_validator.set_problem_try(None)
-            if input_validator.get_problem_completed():
-                bridge_list[current_bridge_problem][0].validate_problem()
-                problem_index += 1
-                input_validator.set_mode("Player")
-                input_validator.say("Well done ! Now reach the door to beat the level.")
-                user_input.set_mode("Player")
-
-                input_validator.set_problem_completed(False)
-            if not credits_reached:
-                draw_grid()
-            if arrow is not None:
-                arrow.draw()
-        else:
-            user_input.set_mouse_over(False)
-            user_input.set_active(False)
-        if user_input.draw():
-            input_validator.set_text(user_input.get_text_saved())
-            input_validator.validate()
-            run_tries += 1
-            score -= 10
-        if input_validator.get_error_feedback():
-            input_validator.draw_error_feedback()
-        if input_validator.has_error() and not user_input.get_error_processed():
-            user_input.set_error_line(input_validator.get_error_line())
-
-        if P.do():
-            P = None
-
-        elif credits_reached:
-            credits_screen.draw()
-            P.moving = True
-            P.climbing = False
-            P.crouching = False
-            P.jumping = False
-            user_input.clear_text()
-            user_input.set_mouse_over(False)
-            user_input.set_active(False)
-            if not credits_screen.get_done():
-                scroll += 0.3
-            else:
-                P.x += 3
-            if P.x > W + SIDE_MARGIN + 100:
-                P = None
-                start_screen.set_state("M")
-                scroll = 0
-                level = 0
-                start_screen.set_paused()
-                credits_reached = False
-
-        else:
-            user_manual.draw()
-            if input_validator.show_feedback:
-                input_validator.draw_fox_feedback()
-            # input_validator.draw_fox_feedback()
-            draw_text(f"Level: {level}", font, (0, 0, 128), 5, 0)
-            screen.blit(cherry_animation_list[0], (5, 60))
-            draw_text(f"  {cherry_count}", font, (0, 0, 128), 5, 60)
-            draw_text(f"Tries: {run_tries}", font, (0, 0, 128), 250, 0)
-
-            # draw_text("Music:", font, (0, 0, 128), 5, 125)
-            music_button.draw(screen)
-            if level_button.draw(screen):
-                start_screen.set_state("L")
-                start_screen.start_screen_on(pygame.time.get_ticks())
-                start_screen.set_level_wanted(level)
-                start_screen.set_max_level_unlocked(max_level)
-                start_screen.set_paused()
-
-            if pause_button.draw(screen):
-                user_input.set_mode("Player")
-                start_screen.set_state("M")
-                start_screen.start_screen_on(pygame.time.get_ticks())
-                start_screen.set_paused()
-                loaded_game_level = False
-                load_level_data(True, False)
-                user_manual.reset_page()
-            # scroll_world_free_movement()  # Uncomment to scroll with Q-D movement
-            if scrolling:
-                scroll = pygame.math.lerp(scroll, goal_scroll, 0.05)
-                if math.ceil(scroll) == math.ceil(goal_scroll) or math.floor(scroll) == math.floor(goal_scroll):
-                    scrolling = False
-                    scroll = goal_scroll
-                    input_validator.set_busy(False)
-
-            if len(input_validator.get_queue()) > 0 and not P.get_lerping():
-                answer = input_validator.process_queue(scroll)
-                if answer:
-                    # draw_world()
-                    goal_scroll += answer[0] * TILE_SIZE / 2
-                    scrolling = answer[1]
-                    if scrolling:
-                        input_validator.set_busy(True)
-
-            if P.get_reach_right_boundary():  # P.get_location()[0] >= (W - 150):
-                reset_scroll = True
-            if reset_scroll:
-                reset_scroll = False
-                scroll = scroll + W - 360
-                # P.setLocation(P.get_location()[0] - 850, P.get_location()[1])
-                P.reset_right_boundary()
-            # print(pygame.mouse.get_pos())
-            if restart_button.draw(screen):
-                P = None
-                arrow = None
-                load_level_data(False, True)
-                score = 0
-                run_tries = 0
-                cherry_count = 0
-
-    elif P is None and not finished_level:
-        # start_screen.start_screen_on(pygame.time.get_ticks())
-        # start_screen.set_paused()
-        P = player.Player(3, 30, player_animation_list, (W, H), TILE_SIZE)
-        user_input.set_mode("Player")
+        """This moves the player to the right of the screen when the credits are done."""
+        credits_player.x += 3
+    if credits_player.x > W + SIDE_MARGIN + 100:
+        """This ends the credits when the player goes outside the screen."""
+        player = None
+        menu.set_state("MENU")
         scroll = 0
-        scrolling = False
-        goal_scroll = 0
-        P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
-        input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W, user_input.get_feedback_rect())
-        input_validator.say("Oh no that got me let's try over!")
+        level = 0
+        load_level_data(True, False)
+        menu.set_paused()
+        credits_reached = False
 
-    elif finished_level:
-        finished_level = False
-        if level == 8:
-            credits_reached = True
-            save_level_data(user_input.get_text_saved())
-            user_input.clear_text()
-            level += 1
-            scrolling = False
-            goal_scroll = 0
-            pygame.mixer.music.stop()
-            pygame.mixer.music.load("assets/audio/music/640853__kjartan_abel__gonna-be-gone.wav")
-            pygame.mixer.music.play()
-            pygame.mixer.music.set_volume(0.08)
-            user_input.set_mode("Player")
-            P = player.Player(3, 30, player_animation_list, (W, H), TILE_SIZE)
-            P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
-            P.moving = True
-            score = 0
-            run_tries = 0
-            cherry_count = 0
-            load_level_data(False, False)
-            user_manual.reset_page()
-            start_screen.set_level_wanted(level)
+
+if __name__ == '__main__':
+    """
+    The entry point of the game.
+
+    This script initializes the game, sets up the game window, loads all the game assets, and runs the game loop.
+
+    Needed variables are initialised as global variables. This module makes classes communicate with each other, and uses them to create wanted behavior.
+
+    The game loop runs continuously until the game is closed. It draws the game world, processes game events, updates the game state, renders the game screen, and more.
+    """
+    # Display variables
+    W, H = 1280, 720  # 1300, 900
+    HW, HH = W / 2, H / 2
+    LOWER_MARGIN, SIDE_MARGIN = 100, 300
+
+    # pygame setup
+    pygame.init()
+    screen = pygame.display.set_mode(
+        (W + SIDE_MARGIN, H))  # + LOWER_MARGIN))  # Add 'LOWER_MARGIN' to H to see console when drawing it.
+    pygame.scrap.init()
+    clock = pygame.time.Clock()
+    pygame.display.set_caption("Outside The Fox")
+    FPS = 120
+    WHITE = (255, 255, 255, 255)
+
+    # Scroll variables.
+    scroll_left = False
+    scroll_right = False
+    scrolling = False
+    goal_scroll = 0
+    scroll = 0
+    scroll_speed = 1
+    reset_scroll = False
+
+    # Grid variables.
+    ROWS = 16
+    MAX_COLS = 150
+    TILE_SIZE = H // ROWS
+    TILE_TYPES = 26
+
+    # Game variables.
+    level = 0
+    max_level = 0
+    FINAL_LEVEL = 8
+    run_tries = 0
+    finished_level = False
+    score = 0
+    cherry_count = 0
+    background_tiles = [2, 15, 16, 17, 18, 19, 20, 22, 25]
+    problem_list = OrderedDict()
+    sign_list = OrderedDict()
+    sign_pressed = False
+    current_problem_index = 0
+    current_sign = 0
+    problem_index = 0
+
+    # Similar informative variables with a few differences.
+    manual_text = loader_class.read_file("assets/txt_files/manual.txt")
+    help_manual_text = loader_class.read_file("assets/txt_files/help_manual.txt")
+
+    # Loads the tiles for the level editor.
+    tiles_list = loader_class.load_tiles(TILE_TYPES, TILE_SIZE)
+
+    '''Init the world and game variables.'''
+    world_data = []
+    cherry_data = {}
+    world_coordinates = []
+    coordinates_filled = False
+
+    editor = code_editor.TextEditor("Player Editor", 24, 56, H - 56, 9)
+
+    load_level_data(True, False)
+
+    GREEN = (0, 255, 0)
+    BLUE = (0, 0, 128)
+    FONT = pygame.font.Font('assets/joystix monospace.otf', 32)
+    start_text = FONT.render('Press F1 to Start', True, GREEN, BLUE)
+    start_rect = start_text.get_rect()
+    start_rect.center = (HW, HH)
+
+    background, middle_ground = loader_class.load_background(W, H)
+    last_update = pygame.time.get_ticks()
+    cherry_animation_list = loader_class.load_sprite_animation('assets/cherry_anim.png', 21, 2, "black", 5)
+
+    arrow_animation_list = loader_class.load_sprite_animation('assets/arrow_sheet.png', 32, 4, "white", 4)
+
+    player_animation_list = loader_class.load_player_animation_list()
+
+    icon = pygame.transform.scale(player_animation_list[0][0], (24, 24))
+    pygame.display.set_icon(icon)
+
+    player_run_cycle = cycle(player_animation_list[1])
+
+    menu = menu.Menu(pygame.time.get_ticks(), player_run_cycle, start_text, start_rect,
+                     (W + SIDE_MARGIN, H), help_manual_text, FINAL_LEVEL)
+    menu.set_max_level_unlocked(max_level)
+    menu.set_level_wanted(level)
+
+    off, on, level_icon, music_assets = loader_class.load_hud_assets()
+
+    pygame.mixer.music.load(next(music_assets))
+    pygame.mixer.music.stop()
+
+    player = player_class.Player(3, 30, player_animation_list, (W, H), TILE_SIZE)
+    draw_world()
+
+    player_start_pos = world_coordinates[14][5]
+    player.set_location(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
+
+    runner = code_runner.Runner(player)
+    runner.subscribe(editor)
+    user_manual = usermanual.UserManual(980, 0, manual_text)
+
+    music_button = music_button_class.MusicButton(50, 225, on, off, 2, "red", "blue", music_assets, on)
+    pygame.mixer.music.play()  # Uncomment for music
+    pygame.mixer.music.set_volume(0.03)
+
+    level_button = button.Button(5, 235, level_icon, 1.5, "lightgreen", (0, 0, 128))
+
+    menu_text = FONT.render('Menu', True, "white")
+    pause_button = button.Button(5, 180, menu_text, 1, "lightgreen", (0, 0, 128))
+
+    arrow = None
+
+    restart_text = FONT.render('Restart', True, "white")
+    restart_button = button.Button(5, 125, restart_text, 1, "lightgreen", (0, 0, 128))
+
+    credits_screen = credits_class.Credits(W, H)
+    credits_reached = False
+    loaded_game_level = False
+
+    # Game loop
+    while True:
+        renderer.draw_background(screen, background, middle_ground, scroll)
+        events()
+        # Handles starting the game and changing levels.
+        if not menu.get_paused() and player:
+            if not loaded_game_level:
+                load_level_data(False, False)
+                reset_score_level()
+                loaded_game_level = True
+            if menu.get_level_wanted() != level:
+                prepare_level_change()
+                level = menu.get_level_wanted()
+                load_level_data(False, False)
+                editor.set_error_processed()
+                reset_score_level()
+
+            # Handles the game's problem system.
+            draw_world()
+            if runner.is_done():
+                if runner.get_mode() != "Player" and runner.get_problem_try() is not None and not \
+                        problem_list[current_problem_index][0].get_show_feedback():
+                    game_manager.attempt_problem(problem_list, current_problem_index, runner)
+                if runner.get_problem_completed():
+                    problem_index = game_manager.completed_problem(problem_index, runner, editor)
+                if not credits_reached:
+                    renderer.draw_grid(screen, player, TILE_SIZE, MAX_COLS, scroll)
+                if arrow is not None:
+                    arrow.draw()
+            # Starts the execution process.
+            if editor.draw():
+                run_tries, score = game_manager.run_editor(runner, run_tries, score, editor)
+            if player.do():
+                player = None
+            elif credits_reached:
+                roll_credits(player)
+            else:
+                draw_hud()
+                scroll, scrolling, goal_scroll = game_manager.process_scrolling(
+                    runner, player, TILE_SIZE, scroll, scrolling, goal_scroll)
+                # print(pygame.mouse.get_pos()) # Uncomment to debug mouse position
+                if restart_button.draw(screen):
+                    player = None
+                    load_level_data(False, True)
+                    score, run_tries, cherry_count, arrow = game_manager.reset_score()
+
+        elif player is None and not finished_level:
+            reset_level()
+            runner.say("Oh no that got me let's try over!")
+
+        elif finished_level:
+            finished_level = False
+            if level == FINAL_LEVEL:
+                # If final level beaten, here the eight one, then roll credits.
+                credits_reached = True
+                finishing_level()
+                loader_class.load_credits_music()
+            else:
+                # Finishing a level
+                max_level += 1
+                menu.set_end_text(f"Well done on finishing the level, your score was: {score}!")
+                finishing_level()
+                menu.set_state("END_SCREEN")
+                menu.set_paused()
         else:
-            P = player.Player(3, 30, player_animation_list, (W, H), TILE_SIZE)
-            max_level += 1
-            save_level_data(user_input.get_text_saved())
-            user_input.clear_text()
-            level += 1
-            start_screen.set_level_wanted(level)
-            load_level_data(False, False)
-            user_manual.reset_page()
-            user_manual.set_active(True)
-            scroll = 0
-            arrow = None
-            scrolling = False
-            goal_scroll = 0
-            P.setLocation(player_start_pos[0] - TILE_SIZE / 2, player_start_pos[1])
-            input_validator = inputboxvalidator.InputBoxValidator(P, TILE_SIZE, W, user_input.get_feedback_rect())
-            user_input.set_mode("Player")
-            start_screen.set_end_text(f"Well done on finishing the level, your score was: {score}!")
-            score = 0
-            run_tries = 0
-            cherry_count = 0
-            start_screen.set_state("E")
-            start_screen.start_screen_on(pygame.time.get_ticks())
-            start_screen.set_paused()
+            draw_world()
+            menu.draw(pygame.time.get_ticks())
 
-    else:
-        draw_world()
-        start_screen.start_screen_on(pygame.time.get_ticks())
-    # draw_debug_console() # Uncomment to see debug console after adding 'LOWER_MARGIN' to 'H' to see console when drawing it.
-
-    pygame.display.update()
-    clock.tick(FPS)
+        '''Uncomment to see debug console after adding 'LOWER_MARGIN' to 'H' to see console when drawing it.'''
+        # renderer.draw_debug_console(screen, player, H, W, SIDE_MARGIN, LOWER_MARGIN, FONT, level, scroll)
+        pygame.display.update()
+        clock.tick(FPS)

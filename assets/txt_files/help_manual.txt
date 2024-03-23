@@ -15,7 +15,7 @@ Editor:
 The 'Player Editor', visible on the right of the screen when playing, is a code editor where you will be able to write code to make the fox move, jump, climb and more. As you progress in the levels you will discover and learn more about it.
 Use the variable 'fox' to perform 'function calls' to make the fox execute actions such as 'fox.moveRight()'. The player editor has two main buttons, the 'RUN' button which executes the code you wrote and the 'CLEAR' button which removes all the code you wrote, so you can start over.
 
-You can press any keys to add text to the editor, the 'DELETE' key removes one character at a time and press the 'ENTER' key makes you go the next line. You can go back and forth in the line you're currently editing with the 'LEFT' and 'RIGHT' keys, but you cannot go up and down between lines. You can copy and paste using 'CTRL+C' and 'CTRL+V', when copying from the editor, first select the lines you want to copy by putting them in the copying rectangle you'll draw by pressing the mouse and moving it, then press 'CTRL+C'. Make sure you selected the editor when doing that (e.g. the color of the editor is lightblue).
+You can press any keys to add text to the editor, the 'BACKSPACE' key removes one character at a time and press the 'ENTER' key makes you go the next line. You can go back and forth in the line you're currently editing with the 'LEFT' and 'RIGHT' keys, but you cannot go up and down between lines. You can copy and paste using 'CTRL+C' and 'CTRL+V', when copying from the editor, first select the lines you want to copy by putting them in the copying rectangle you'll draw by pressing the mouse and moving it, then press 'CTRL+C'. Make sure you selected the editor when doing that (e.g. the color of the editor is lightblue).
 
 When executing the code and an error happens, the editor is going to highlight the error line in red and give you the reason of the error. If the error message seems unclear, and you cannot understand where the error in your code is, try to look it up as the error messages are real messages given back when running Python code and answers and explanations for them are wildly available.
 
@@ -44,7 +44,7 @@ Loop disclaimer: If you are trying to write a loop, and it happens to be infinit
 
 
 Editor keys:
-  - DELETE
+  - BACKSPACE
   - ENTER
   - LEFT
   - RIGHT

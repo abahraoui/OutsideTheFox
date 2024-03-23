@@ -1,14 +1,23 @@
 import pygame
 from pygame.locals import *
 import sys
-import button
+from main.buttons import button
 import pickle
 
 pygame.init()
 
+""" 
+This module was greatly inspired by 'Coding with Russ' at https://github.com/russs123/LevelEditor
 
-# This module was greatly inspired by 'Coding with Russ' at https://github.com/russs123/LevelEditor
+The Level Editor requires to be run alone, and will allow you to place tiles directly on the screen, 
+the currently edited level can be changed with UP and DOWN. But requires you to click the 'Load' button everytime,
+'Save' button will overwrite the 'level_data' file and save it in the 'level_data' folder,
+so be careful you are on the right level before saving. 
 
+LEFT and RIGHT can be used to navigate through the world by scrolling,
+and pressing SHIFT while doing will make the scrolling faster. To place a tile make sure it's selected and LEFT CLICK
+on the grid to place it somewhere, RIGHT CLICK will remove tiles.
+"""
 # Event handler.
 def events():
     global scroll_left
