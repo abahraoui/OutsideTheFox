@@ -1,5 +1,10 @@
 A game where you control a Fox from Outside the Box !
 
+Welcome to my end of studies project, a game teaching programming with no barrier of entry !
+
+![2025-01-1312-57-33-ezgif com-video-to-gif-converter](https://github.com/user-attachments/assets/ada26a45-13ec-4be7-a982-4c0cdf171e46)
+
+
 Bug disclaimer: There might be a bug crashing the game, coming from the use of Pygame Cursors, happening about once every 30
 launches of the game. It is coming from the framework and as it's not a critical bug happening everytime, some cursors have been kept to help with visual feedback. 
 The bug comes from the underlying implementation of Pygame and can't be fixed until the Pygame developers fix it.
