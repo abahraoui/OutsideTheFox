@@ -2,7 +2,7 @@ A game where you control a Fox from Outside the Box !
 
 Welcome to my end of studies project, a game teaching programming with no barrier of entry !
 
-![2025-01-1312-57-33-ezgif com-video-to-gif-converter](https://github.com/user-attachments/assets/ada26a45-13ec-4be7-a982-4c0cdf171e46)
+![](https://github.com/abahraoui/OutsideTheFox/blob/master/assets/2025-01-1312-57-33-ezgif.com-video-to-gif-converter.gif)
 
 
 Bug disclaimer: There might be a bug crashing the game, coming from the use of Pygame Cursors, happening about once every 30
